@@ -81,7 +81,6 @@ public final class SpongeRegistries {
         holder.createFrozenRegistry(RegistryTypes.RESOLVE_OPERATION, SpongeRegistryLoader.resolveOperation());
         holder.createFrozenRegistry(RegistryTypes.SKIN_PART, SpongeRegistryLoader.skinPart());
         holder.createFrozenRegistry(RegistryTypes.SPAWN_TYPE, SpongeRegistryLoader.spawnType());
-        holder.createFrozenRegistry(RegistryTypes.TICKET_TYPE, SpongeRegistryLoader.ticketType());
         holder.createFrozenRegistry(RegistryTypes.TRANSACTION_TYPE, SpongeRegistryLoader.transactionType());
         holder.createFrozenRegistry(RegistryTypes.WEATHER_TYPE, SpongeRegistryLoader.weather());
         holder.createFrozenRegistry(RegistryTypes.DATA_FORMAT, SpongeRegistryLoader.dataFormat());
@@ -92,9 +91,6 @@ public final class SpongeRegistries {
         holder.createFrozenRegistry(RegistryTypes.NOISE_CONFIG, SpongeRegistryLoader.noiseConfig());
 
         SpongeRegistries.registerEarlyDynamicRegistries(holder);
-
-
-
     }
 
     private static void registerEarlyDynamicRegistries(final SpongeRegistryHolder holder) {

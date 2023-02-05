@@ -70,7 +70,6 @@
         "server.level.ServerPlayerMixin",
         "server.level.ServerPlayerMixin_HealthScale",
         "server.level.TicketMixin",
-        "server.level.TicketTypeMixin",
         "server.network.LegacyQueryHandlerMixin",
         "server.network.ServerGamePacketListenerImpl_1Mixin",
         "server.network.ServerGamePacketListenerImplMixin",
