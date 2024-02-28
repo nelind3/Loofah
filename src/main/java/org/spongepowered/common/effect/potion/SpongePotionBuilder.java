@@ -26,6 +26,7 @@ package org.spongepowered.common.effect.potion;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -145,7 +146,7 @@ public final class SpongePotionBuilder extends AbstractDataBuilder<PotionEffect>
         if (this.duration.ticks() <= 0) {
             throw new IllegalStateException("Duration has not been set");
         }
-        return (PotionEffect) new net.minecraft.world.effect.MobEffectInstance((MobEffect) this.potionType,
+        return (PotionEffect) new net.minecraft.world.effect.MobEffectInstance(Holder.direct((MobEffect) this.potionType),
                 (int) this.duration.ticks(),
                 this.amplifier,
                 this.isAmbient,
