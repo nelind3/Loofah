@@ -27,6 +27,9 @@ package org.spongepowered.common.item;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -70,7 +73,7 @@ public final class SpongeItemStack  {
         private ItemType type;
         private int quantity;
         private @Nullable LinkedHashMap<Key<?>, Object> keyValues;
-        private @Nullable CompoundTag compound;
+        private DataComponentMap components = DataComponentMap.EMPTY;
 
         public BuilderImpl() {
             super(ItemStack.class, 1);
@@ -111,13 +114,8 @@ public final class SpongeItemStack  {
             // Assumes the item stack's values don't need to be validated
             this.type = itemStack.type();
             this.quantity = itemStack.quantity();
-            if ((Object) itemStack instanceof net.minecraft.world.item.ItemStack) {
-                final CompoundTag itemCompound = ((net.minecraft.world.item.ItemStack) (Object) itemStack).getTag();
-                if (itemCompound != null && !itemCompound.isEmpty()) {
-                    this.compound = itemCompound.copy();
-                } else {
-                    this.compound = null;
-                }
+            if ((Object) itemStack instanceof net.minecraft.world.item.ItemStack mcStack) {
+                components = DataComponentMap.builder().addAll(mcStack.getComponents()).build();
                 //            this.itemDataSet.addAll(((CustomDataHolderBridge) itemStack).bridge$getCustomManipulators());
 
             } else {
@@ -132,18 +130,16 @@ public final class SpongeItemStack  {
             Objects.requireNonNull(modifier, "AttributeModifier cannot be null");
             Objects.requireNonNull(equipmentType, "EquipmentType cannot be null");
 
-            // Create the compound if needed
-            if (this.compound == null) {
-                this.compound = new CompoundTag();
+            if (!this.components.has(DataComponents.ATTRIBUTE_MODIFIERS)) {
+
             }
 
-            final CompoundTag compound = this.compound;
-
-            if (!compound.contains(Constants.ItemStack.ATTRIBUTE_MODIFIERS, Constants.NBT.TAG_LIST)) {
-                compound.put(Constants.ItemStack.ATTRIBUTE_MODIFIERS, new ListTag());
-            }
-
-            final ListTag attributeModifiers = compound.getList(Constants.ItemStack.ATTRIBUTE_MODIFIERS, Constants.NBT.TAG_COMPOUND);
+            // TODO this is not doing anything
+//            if (!compound.contains(Constants.ItemStack.ATTRIBUTE_MODIFIERS, Constants.NBT.TAG_LIST)) {
+//                compound.put(Constants.ItemStack.ATTRIBUTE_MODIFIERS, new ListTag());
+//            }
+//
+//            final ListTag attributeModifiers = compound.getList(Constants.ItemStack.ATTRIBUTE_MODIFIERS, Constants.NBT.TAG_COMPOUND);
 
             // The modifier will apply in any slot, equipable or not. Pass null for the slot
             //        if (equipmentType.equals(EquipmentTypes.ANY.get()) || equipmentType.equals(EquipmentTypes.EQUIPPED.get())) {
@@ -189,9 +185,9 @@ public final class SpongeItemStack  {
                     compound.remove(Constants.Sponge.Data.V2.SPONGE_DATA);
                 }
                 if (!compound.isEmpty()) {
-                    this.compound = compound;
+                    this.components = compound;
                 } else {
-                    this.compound = null;
+                    this.components = null;
                 }
             }
             if (container.contains(Constants.Sponge.DATA_MANIPULATORS)) {
@@ -216,7 +212,7 @@ public final class SpongeItemStack  {
             }
 
             if (snapshot instanceof SpongeItemStackSnapshot) {
-                this.compound = ((SpongeItemStackSnapshot) snapshot).getCompound().orElse(null);
+                this.components = ((SpongeItemStackSnapshot) snapshot).getCompound().orElse(null);
             }
 
             return this;
@@ -234,8 +230,8 @@ public final class SpongeItemStack  {
             if (blockSnapshot instanceof SpongeBlockSnapshot) {
                 final Optional<CompoundTag> compound = ((SpongeBlockSnapshot) blockSnapshot).getCompound();
                 if (compound.isPresent()) {
-                    this.compound = new CompoundTag();
-                    this.compound.put(Constants.Item.BLOCK_ENTITY_TAG, compound.get());
+                    this.components = new CompoundTag();
+                    this.components.put(Constants.Item.BLOCK_ENTITY_TAG, compound.get());
                 }
                 // todo probably needs more testing, but this'll do donkey...
             } else { // TODO handle through the API specifically handling the rest of the data stuff
@@ -302,7 +298,7 @@ public final class SpongeItemStack  {
         public ItemStack.Builder reset() {
             this.type = null;
             this.quantity = 1;
-            this.compound = null;
+            this.components = null;
             return this;
         }
 
@@ -317,8 +313,8 @@ public final class SpongeItemStack  {
             }
 
             final ItemStack stack = (ItemStack) (Object) new net.minecraft.world.item.ItemStack((Item) this.type, this.quantity);
-            if (this.compound != null && !this.compound.isEmpty()) {
-                ((net.minecraft.world.item.ItemStack) (Object) stack).setTag(this.compound.copy());
+            if (this.components != null && !this.components.isEmpty()) {
+                ((net.minecraft.world.item.ItemStack) (Object) stack).setTag(this.components.copy());
             }
             //        if (this.itemDataSet != null) {
             //            this.itemDataSet.forEach(stack::offer);
@@ -327,8 +323,8 @@ public final class SpongeItemStack  {
             if (this.keyValues != null) {
                 this.keyValues.forEach((key, value) -> stack.offer((Key) key, value));
             }
-            if (this.compound != null && this.compound.contains(Constants.Forge.FORGE_CAPS, Constants.NBT.TAG_COMPOUND)) {
-                final CompoundTag compoundTag = this.compound.getCompound(Constants.Forge.FORGE_CAPS);
+            if (this.components != null && this.components.contains(Constants.Forge.FORGE_CAPS, Constants.NBT.TAG_COMPOUND)) {
+                final CompoundTag compoundTag = this.components.getCompound(Constants.Forge.FORGE_CAPS);
                 if (compoundTag != null) {
                     PlatformHooks.INSTANCE.getItemHooks().setCapabilitiesFromSpongeBuilder((net.minecraft.world.item.ItemStack) (Object) stack, compoundTag);
                 }
