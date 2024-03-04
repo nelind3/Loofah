@@ -42,7 +42,6 @@ import org.spongepowered.common.event.tracking.PhaseContext;
 import org.spongepowered.common.event.tracking.PhaseTracker;
 import org.spongepowered.common.event.tracking.context.transaction.EffectTransactor;
 import org.spongepowered.common.event.tracking.context.transaction.TransactionalCaptureSupplier;
-import org.spongepowered.common.hooks.PlatformHooks;
 
 @Mixin(value = ServerGamePacketListenerImpl.class, priority = 999)
 public abstract class ServerGamePacketListenerImplMixin_Vanilla extends ServerCommonPacketListenerImplMixin_Vanilla implements ServerGamePacketListener {
@@ -71,14 +70,4 @@ public abstract class ServerGamePacketListenerImplMixin_Vanilla extends ServerCo
         }
     }
 
-    /**
-     * Specifically hooks the reach distance to use the forge hook. SpongeForge does not need this hook as forge already
-     * replaces this logic with an equivalent.
-     */
-    @Redirect(
-        method = "handleInteract",
-        at = @At(value = "FIELD", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;MAX_INTERACTION_DISTANCE:D"))
-    private double vanilla$getPlatformReach(final ServerboundInteractPacket packet) {
-        return PlatformHooks.INSTANCE.getGeneralHooks().getEntityReachDistanceSq(this.player, packet.getTarget(this.player.serverLevel()));
-    }
 }
