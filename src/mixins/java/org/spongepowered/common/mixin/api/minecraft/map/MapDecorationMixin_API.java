@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.api.minecraft.map;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
@@ -50,8 +51,9 @@ public abstract class MapDecorationMixin_API implements org.spongepowered.api.ma
     @Shadow private byte x;
     @Shadow private byte y;
     @Shadow private byte rot;
-    @Shadow @Nullable public abstract Component shadow$name();
+    @Shadow @Final private java.util.Optional<Component> name;
     // @formatter:on
+
 
     @Override
     public MapDecorationType type() {
@@ -103,9 +105,7 @@ public abstract class MapDecorationMixin_API implements org.spongepowered.api.ma
                 .set(Constants.Map.DECORATION_X, this.x)
                 .set(Constants.Map.DECORATION_Y, this.y)
                 .set(Constants.Map.DECORATION_ROTATION, (byte) MapUtil.normalizeDecorationOrientation(this.rot));
-        if (this.shadow$name() != null) {
-            data.set(Constants.Map.NAME, Component.Serializer.toJson(this.shadow$name(), SpongeCommon.server().registryAccess()));
-        }
+        this.name.ifPresent(component -> data.set(Constants.Map.NAME, Component.Serializer.toJson(component, SpongeCommon.server().registryAccess())));
         return data;
     }
 }
