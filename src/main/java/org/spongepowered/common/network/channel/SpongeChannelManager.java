@@ -288,15 +288,15 @@ public final class SpongeChannelManager implements ChannelManager {
     }
 
     private void handleChannelRegistry(final EngineConnection connection, final ChannelBuf payload) {
-        final Set<ResourceKey> registered = ConnectionUtil.getRegisteredChannels(connection);
-        registered.clear();
-
-        final int count = payload.readVarInt();
-        for (int i = 0; i < count; i++) {
-            final ResourceKey key = ResourceKey.resolve(payload.readString());
-            payload.readByte(); // type
-            registered.add(key);
-        }
+//        final Set<ResourceKey> registered = ConnectionUtil.getRegisteredChannels(connection);
+//        registered.clear();
+//
+//        final int count = payload.readVarInt();
+//        for (int i = 0; i < count; i++) {
+//            final ResourceKey key = ResourceKey.resolve(payload.readString());
+//            payload.readByte(); // type
+//            registered.add(key);
+//        }
     }
 
     public boolean handlePlayPayload(final EngineConnection connection, final CustomPacketPayload payload) {
