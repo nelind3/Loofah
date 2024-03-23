@@ -24,11 +24,11 @@
  */
 package org.spongepowered.common.mixin.api.minecraft.map;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.data.persistence.DataContainer;
 import org.spongepowered.api.map.decoration.MapDecorationType;
 import org.spongepowered.api.map.decoration.orientation.MapDecorationOrientation;
@@ -43,15 +43,17 @@ import org.spongepowered.common.util.Constants;
 import org.spongepowered.common.util.MapUtil;
 import org.spongepowered.math.vector.Vector2i;
 
+import java.util.Optional;
+
 @Mixin(MapDecoration.class)
 public abstract class MapDecorationMixin_API implements org.spongepowered.api.map.decoration.MapDecoration {
 
     // @formatter:off
-    @Shadow @Final private MapDecoration.Type type;
-    @Shadow private byte x;
-    @Shadow private byte y;
-    @Shadow private byte rot;
-    @Shadow @Final private java.util.Optional<Component> name;
+    @Shadow @Final private Holder<net.minecraft.world.level.saveddata.maps.MapDecorationType> type;
+    @Shadow @Final private byte x;
+    @Shadow @Final private byte y;
+    @Shadow @Final private byte rot;
+    @Shadow @Final private Optional<Component> name;
     // @formatter:on
 
 
@@ -100,7 +102,7 @@ public abstract class MapDecorationMixin_API implements org.spongepowered.api.ma
     @Override
     public DataContainer toContainer() {
         final DataContainer data = DataContainer.createNew()
-                .set(Constants.Map.DECORATION_TYPE, this.type.getIcon())
+                .set(Constants.Map.DECORATION_TYPE, BuiltInRegistries.MAP_DECORATION_TYPE.getKey(this.type.value()))
                 .set(Constants.Map.DECORATION_ID, ((MapDecorationBridge) this).bridge$getKey())
                 .set(Constants.Map.DECORATION_X, this.x)
                 .set(Constants.Map.DECORATION_Y, this.y)
