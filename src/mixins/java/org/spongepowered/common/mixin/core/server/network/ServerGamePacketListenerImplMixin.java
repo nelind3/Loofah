@@ -31,7 +31,6 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -130,9 +129,11 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
 
     @Shadow public abstract void shadow$teleport(double x, double y, double z, float yaw, float pitch, Set<RelativeMovement> relativeArguments);
     @Shadow protected abstract CompletableFuture<List<FilteredText>> shadow$filterTextPacket(final List<String> $$0);
-    @Shadow protected abstract void shadow$performChatCommand(final ServerboundChatCommandPacket $$0, final LastSeenMessages $$1);
+    @Shadow protected abstract void shadow$performUnsignedChatCommand(final String $$0);
     @Shadow protected abstract ParseResults<CommandSourceStack> shadow$parseCommand(final String $$0);
     // @formatter:on
+
+    @Shadow protected abstract void performUnsignedChatCommand(final String $$0);
 
     @Nullable private ResourcePack impl$lastAcceptedPack;
 
@@ -502,12 +503,12 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
         }
     }
 
-    @Redirect(method = "lambda$handleChatCommand$7", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;performChatCommand(Lnet/minecraft/network/protocol/game/ServerboundChatCommandPacket;Lnet/minecraft/network/chat/LastSeenMessages;)V"))
-    public void impl$onPerformChatCommand(final ServerGamePacketListenerImpl instance, final ServerboundChatCommandPacket $$0, final LastSeenMessages $$1) {
+    @Redirect(method = "lambda$handleChatCommand$7", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;performUnsignedChatCommand(Ljava/lang/String;)V"))
+    public void impl$onPerformChatCommand(final ServerGamePacketListenerImpl instance, final String $$0) {
         try (final CauseStackManager.StackFrame frame = PhaseTracker.getCauseStackManager().pushCauseFrame()) {
             frame.pushCause(this.player);
-            frame.addContext(EventContextKeys.COMMAND, $$0.command());
-            this.shadow$performChatCommand($$0, $$1);
+            frame.addContext(EventContextKeys.COMMAND, $$0);
+            this.performUnsignedChatCommand($$0);
         }
     }
 
