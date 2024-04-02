@@ -37,7 +37,7 @@ public abstract class FriendlyByteBufMixin_Vanilla implements FriendlyByteBufBri
 
     @Redirect(method = "writeItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;writeNbt(Lnet/minecraft/nbt/Tag;)Lnet/minecraft/network/FriendlyByteBuf;"))
     public FriendlyByteBuf renderItemComponents(final FriendlyByteBuf buf, final Tag tag) {
-        if (tag instanceof CompoundTag compoundTag) {
+        if (tag instanceof final CompoundTag compoundTag) {
             return buf.writeNbt(bridge$renderItemComponents(compoundTag));
         }
         return buf.writeNbt(tag);

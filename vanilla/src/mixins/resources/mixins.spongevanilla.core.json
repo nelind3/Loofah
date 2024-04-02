@@ -20,6 +20,7 @@
         "CrashReportMixin_Vanilla",
         "brigadier.exceptions.CommandSyntaxExceptionMixin_Vanilla",
         "commands.CommandsMixin_Vanilla",
+        "network.ConnectionMixin_Vanilla",
         "network.FriendlyByteBufMixin_Vanilla",
         "server.BootstrapMixin_Vanilla",
         "server.MinecraftServerMixin_Vanilla",
