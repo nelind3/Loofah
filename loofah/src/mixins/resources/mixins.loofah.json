@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "package": "dk.nelind.loofah.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "dk.nelind.loofah.mixin.plugin.FabricMixinPlugin",
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+

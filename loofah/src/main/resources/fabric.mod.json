@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "loofah",
+  "version": "${version}",
+  "name": "Loofah",
+  "description": "A SpongeAPI implementation for the Fabric ecosystem",
+  "authors": [
+    "Nelind"
+  ],
+  "contact": {
+    "homepage": "https://www.nelind.dk",
+    "sources": "https://github.com/nelind3/Loofah"
+  },
+  "license": "MIT",
+  "icon": "assets/loofah/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dk.nelind.loofah.main.Loofah"
+    ]
+  },
+  "accessWidener" : "common.accesswidener",
+  "mixins": [
+    "mixins.loofah.json",
+    "mixins.sponge.api.json",
+    "mixins.sponge.accessors.json",
+    "mixins.sponge.bugfix.json",
+    "mixins.sponge.concurrent.json",
+    "mixins.sponge.core.json",
+    "mixins.sponge.entityactivation.json",
+    "mixins.sponge.exploit.json",
+    "mixins.sponge.inventory.json",
+    "mixins.sponge.ipforward.json",
+    "mixins.sponge.movementcheck.json",
+    "mixins.sponge.optimization.json",
+    "mixins.sponge.tracker.json"
+  ],
+  "depends": {
+    "java": ">=17",
+    "fabricloader": ">=0.15.7",
+    "minecraft": "~1.20.4",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
