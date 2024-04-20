@@ -93,6 +93,18 @@ if (false && spongeForgeEnabledInCi.toBoolean()) {
     project(":SpongeForge").projectDir = file("forge")
 }
 
+val loofah = file("loofah.settings.gradle.kts")
+if (loofah.exists()) {
+    apply(from = loofah)
+} else {
+    loofah.writeText(listOf(
+        "// Uncomment/Comment out to enable/disable the Loofah module.",
+        "// By default only Loofah is made available but this is here in case that default ends up needing to change",
+        "include(\":Loofah\")",
+        "project(\":Loofah\").projectDir = file(\"loofah\")"
+    ).joinToString(separator = System.lineSeparator(), postfix = System.lineSeparator()))
+}
+
 // Include properties from API project (with api prefix)
 val apiProps = file("SpongeAPI/gradle.properties")
 if (apiProps.exists()) {
