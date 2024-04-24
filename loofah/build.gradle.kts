@@ -41,10 +41,11 @@ val accessors: SourceSet = commonProject.sourceSets.named("accessors").get()
 
 
 //Fabric source sets and configurations
-val fabricBundledLibraries = configurations.register("bundledLibraries") {
-    extendsFrom(configurations.named("minecraftLibraries").get())
-    extendsFrom(configurations.named("loaderLibraries").get())
-}.get()
+val gameManagedLibraries = configurations.register("bundledLibraries").get()
+// Kinda hackish but makes the game itself dependable.
+afterEvaluate {
+    gameManagedLibraries.extendsFrom(configurations.named("minecraftNamedCompile").get())
+}
 val fabricBootstrapLibrariesConfig = configurations.register("bootstrapLibraries").get()
 val fabricLibrariesConfig = configurations.register("libraries") {
     extendsFrom(fabricBootstrapLibrariesConfig)
@@ -59,7 +60,7 @@ val fabricMain by sourceSets.named("main") {
     spongeImpl.applyNamedDependencyOnOutput(commonProject, main, this, project, this.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
-        extendsFrom(fabricBundledLibraries)
+        extendsFrom(gameManagedLibraries)
         extendsFrom(fabricLibrariesConfig)
     }
 }
@@ -71,7 +72,7 @@ val fabricLaunch by sourceSets.register("launch") {
     spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
-        extendsFrom(fabricBundledLibraries)
+        extendsFrom(gameManagedLibraries)
         extendsFrom(fabricLibrariesConfig)
     }
 }
@@ -82,7 +83,7 @@ val fabricAppLaunch by sourceSets.register("applaunch") {
     spongeImpl.applyNamedDependencyOnOutput(project, this, fabricLaunch, project, fabricLaunch.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
-        extendsFrom(fabricBundledLibraries)
+        extendsFrom(gameManagedLibraries)
         extendsFrom(fabricBootstrapLibrariesConfig)
     }
 }
@@ -95,7 +96,7 @@ val fabricMixins by sourceSets.register("mixins") {
     spongeImpl.applyNamedDependencyOnOutput(project, fabricAppLaunch, this, project, this.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
-        extendsFrom(fabricBundledLibraries)
+        extendsFrom(gameManagedLibraries)
         extendsFrom(fabricBootstrapLibrariesConfig)
     }
 }
@@ -148,14 +149,9 @@ dependencies {
         officialMojangMappings { nameSyntheticMembers = true }
         parchment("org.parchmentmc.data:parchment-$minecraftVersion:2024.02.25")
     })
-    modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
-
-    // Make minecraft available for the other source sets
-    fabricBundledLibraries("net.minecraft:minecraft-merged-bb44d75a1e:1.20.4-loom.mappings.1_20_4.layered+hash.420342176-v2") //TODO: find something better than whatever this is
-    fabricBundledLibraries("net.fabricmc:fabric-loader:$fabricLoaderVersion")
+    gameManagedLibraries(modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")!!)
 
     // Mod dependencies
-    //modImplementation(include("net.kyori:adventure-platform-fabric:5.12.0")!!)
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
 
     // API dependencies
