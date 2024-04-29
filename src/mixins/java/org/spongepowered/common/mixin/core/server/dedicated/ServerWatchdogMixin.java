@@ -22,13 +22,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.bridge.world.level.chunk.storage;
+package org.spongepowered.common.mixin.core.server.dedicated;
 
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-import org.spongepowered.common.world.level.chunk.storage.SpongeIOWorkerType;
+import net.minecraft.server.dedicated.ServerWatchdog;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.common.util.JvmUtil;
 
-public interface IOWorkerBridge {
+@Mixin(ServerWatchdog.class)
+public abstract class ServerWatchdogMixin {
 
-    void bridge$setDimension(SpongeIOWorkerType type, ResourceKey<Level> dimension);
+    @Inject(method = "exit", at = @At("HEAD"))
+    private void impl$dumpHeap(final CallbackInfo ci) {
+        if (Boolean.getBoolean("sponge.watchdogWriteDumpHeap")) {
+            JvmUtil.dumpHeap();
+        }
+    }
 }
