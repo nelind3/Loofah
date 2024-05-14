@@ -41,7 +41,7 @@ val accessors: SourceSet = commonProject.sourceSets.named("accessors").get()
 
 
 //Fabric source sets and configurations
-val gameManagedLibraries = configurations.register("bundledLibraries").get()
+val gameManagedLibraries = configurations.register("gameManagedLibraries").get()
 // Kinda hackish but makes the game itself dependable.
 afterEvaluate {
     gameManagedLibraries.extendsFrom(configurations.named("minecraftNamedCompile").get())
@@ -94,6 +94,9 @@ val fabricMixins by sourceSets.register("mixins") {
     spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, fabricAppLaunch, this, project, this.implementationConfigurationName)
+
+    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
+
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
@@ -155,18 +158,29 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
 
     // API dependencies
+    fabricBootstrapLibrariesConfig(apiLibs.pluginSpi) {
+        exclude("com.google.code.gson")
+    }
+    fabricBootstrapLibrariesConfig(platform(apiLibs.configurate.bom))
+    fabricBootstrapLibrariesConfig(apiLibs.configurate.core)
+    fabricBootstrapLibrariesConfig(apiLibs.configurate.hocon)
+    fabricBootstrapLibrariesConfig(apiLibs.configurate.gson) {
+        exclude("com.google.code.gson")
+    }
+    fabricBootstrapLibrariesConfig(apiLibs.configurate.yaml)
     fabricLibrariesConfig("org.spongepowered:spongeapi:$apiVersion") { isTransitive = false }
-    fabricLibrariesConfig(platform(apiLibs.configurate.bom))
-    fabricLibrariesConfig(apiLibs.configurate.core)
-    fabricLibrariesConfig(apiLibs.configurate.hocon)
-    fabricLibrariesConfig(apiLibs.configurate.gson)
-    fabricLibrariesConfig(apiLibs.configurate.yaml)
     fabricLibrariesConfig(platform(apiLibs.adventure.bom))
     fabricLibrariesConfig(apiLibs.adventure.api)
     fabricLibrariesConfig(apiLibs.adventure.minimessage)
-    fabricLibrariesConfig(apiLibs.adventure.textSerializer.gson)
+    fabricLibrariesConfig(apiLibs.adventure.textSerializer.gson) {
+        exclude("com.google.code.gson")
+    }
     fabricLibrariesConfig(apiLibs.adventure.textSerializer.plain)
     fabricLibrariesConfig(apiLibs.math)
+    fabricLibrariesConfig(apiLibs.guice) {
+        exclude("org.ow2.asm")
+        exclude("com.google.guava")
+    }
 }
 
 tasks {
