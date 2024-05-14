@@ -15,6 +15,9 @@
   "icon": "assets/loofah/icon.png",
   "environment": "*",
   "entrypoints": {
+    "preLaunch": [
+      "dk.nelind.loofah.applaunch.AppLaunchMain"
+    ],
     "main": [
       "dk.nelind.loofah.main.Loofah"
     ]

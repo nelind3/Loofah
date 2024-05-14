@@ -25,107 +25,191 @@
 package dk.nelind.loofah.applaunch.plugin;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.common.applaunch.AppLaunch;
 import org.spongepowered.common.applaunch.config.core.SpongeConfigs;
 import org.spongepowered.common.applaunch.plugin.PluginPlatform;
+import org.spongepowered.common.applaunch.plugin.PluginPlatformConstants;
+import org.spongepowered.plugin.PluginCandidate;
+import org.spongepowered.plugin.PluginLanguageService;
+import org.spongepowered.plugin.PluginResource;
+import org.spongepowered.plugin.PluginResourceLocatorService;
+import org.spongepowered.plugin.blackboard.Keys;
+import org.spongepowered.plugin.builtin.StandardEnvironment;
+import org.spongepowered.plugin.builtin.jvm.JVMKeys;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class FabricPluginPlatform implements PluginPlatform {
     private static volatile boolean bootstrapped;
 
-    private final FabricLoader loader;
-    private final Logger logger;
-    private final List<Path> pluginDirectories;
+    private final StandardEnvironment standardEnvironment;
+    private final Map<String, PluginResourceLocatorService<PluginResource>> locatorServices;
+    private final Map<String, PluginLanguageService<PluginResource>> languageServices;
+
+    private final Map<String, Set<PluginResource>> locatorResources;
+    private final Map<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> pluginCandidates;
 
     public FabricPluginPlatform() {
-        this.loader = FabricLoader.getInstance();
-        this.logger = LogManager.getLogger("loofah");
-        this.pluginDirectories = new ArrayList<>();
-
-        this.pluginDirectories.add(loader.getGameDir().resolve("mods"));
+        this.locatorServices = new HashMap<>();
+        this.languageServices = new HashMap<>();
+        this.locatorResources = new HashMap<>();
+        this.pluginCandidates = new IdentityHashMap<>();
+        this.standardEnvironment = new StandardEnvironment(LogManager.getLogger("Loofah/AppLaunch"));
     }
 
-    /**
-     * Bootstrap the Fabric Plugin platform. This is intended for use by a mixin configuration plugin to make the plugin platform available during mixin application.
-     */
     public static synchronized void bootstrap() {
-        if (FabricPluginPlatform.bootstrapped) {
-            return;
-        }
+        if (FabricPluginPlatform.bootstrapped) { return; }
+
+        FabricPluginPlatform pluginPlatform = new FabricPluginPlatform();
+        AppLaunch.setPluginPlatform(pluginPlatform);
+        FabricLoader loader = FabricLoader.getInstance();
+        pluginPlatform.setBaseDirectory(loader.getGameDir());
+        ModContainer loofahModContainer = loader
+            .getModContainer("loofah")
+            .orElseThrow(() -> new IllegalStateException("Tried to get own ModContainer, but it wasn't available. This should be impossible!!"));
+        String loofahVersion = loofahModContainer.getMetadata().getVersion().getFriendlyString();
+        pluginPlatform.setVersion(loofahVersion);
+        ArrayList<Path> pluginDirectories = new ArrayList<>(2);
+        pluginPlatform.setPluginDirectories(pluginDirectories);
+        pluginDirectories.add(loader.getGameDir().resolve("mods"));
+        pluginDirectories.add(Paths.get(SpongeConfigs.getCommon().get().general.pluginsDir.getParsed()));
+        pluginPlatform.setMetadataFilePath(PluginPlatformConstants.METADATA_FILE_LOCATION);
+
         FabricPluginPlatform.bootstrapped = true;
-        final FabricPluginPlatform platform = new FabricPluginPlatform();
-        AppLaunch.setPluginPlatform(platform);
-        platform.init();
-    }
-
-    public void init() {
-        final Path alternativePluginsDirectory = Paths.get(SpongeConfigs.getCommon().get().general.pluginsDir.getParsed());
-        try {
-            Files.createDirectories(alternativePluginsDirectory);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        this.pluginDirectories.add(alternativePluginsDirectory);
     }
 
     @Override
     public String version() {
-        /*Optional<ModContainer> optionalModContainer = loader.getModContainer("loofah");
-        if (optionalModContainer.isPresent()) {
-            return optionalModContainer.get().getMetadata().getVersion().getFriendlyString();
-        } else {
-            throw new IllegalStateException("Tried to get own ModContainer, but it wasn't available.");
-        }*/
-
-        return "FabricPluginPlatform.version()"; //TODO: Find what version we should respond with (game or sponge version) and respond appropriately ... please be sponge version
+        return this.standardEnvironment.blackboard().get(Keys.VERSION);
     }
 
     @Override
-    public void setVersion(String s) {
-
+    public void setVersion(String version) {
+        this.standardEnvironment.blackboard().getOrCreate(Keys.VERSION, () -> version);
     }
 
     @Override
     public Logger logger() {
-        return this.logger;
+        return this.standardEnvironment.logger();
     }
 
     @Override
     public Path baseDirectory() {
-        return loader.getGameDir();
+        return this.standardEnvironment.blackboard().get(Keys.BASE_DIRECTORY);
     }
 
     @Override
     public void setBaseDirectory(Path path) {
-
+        this.standardEnvironment.blackboard().getOrCreate(Keys.BASE_DIRECTORY, () -> path);
     }
 
     @Override
     public List<Path> pluginDirectories() {
-        return pluginDirectories;
+        return this.standardEnvironment.blackboard().get(Keys.PLUGIN_DIRECTORIES);
     }
 
     @Override
     public void setPluginDirectories(List<Path> list) {
-
+        this.standardEnvironment.blackboard().getOrCreate(Keys.PLUGIN_DIRECTORIES, () -> list);
     }
 
     @Override
     public String metadataFilePath() {
-        return "spongemetadata";
+        return this.standardEnvironment.blackboard().get(JVMKeys.METADATA_FILE_PATH);
     }
 
     @Override
-    public void setMetadataFilePath(String s) {
+    public void setMetadataFilePath(String path) {
+        this.standardEnvironment.blackboard().getOrCreate(JVMKeys.METADATA_FILE_PATH, () -> path);
+    }
 
+    public Map<String, PluginResourceLocatorService<PluginResource>> getLocatorServices() {
+        return Collections.unmodifiableMap(this.locatorServices);
+    }
+
+    public Map<String, PluginLanguageService<PluginResource>> getLanguageServices() {
+        return Collections.unmodifiableMap(this.languageServices);
+    }
+
+    public Map<String, Set<PluginResource>> getResources() {
+        return Collections.unmodifiableMap(this.locatorResources);
+    }
+
+    public Map<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> getCandidates() {
+        return Collections.unmodifiableMap(this.pluginCandidates);
+    }
+
+    public void discoverLocatorServices() {
+        final ServiceLoader<PluginResourceLocatorService<PluginResource>> serviceLoader = (ServiceLoader<PluginResourceLocatorService<PluginResource>>) (Object) ServiceLoader.load(
+            PluginResourceLocatorService.class, FabricPluginPlatform.class.getClassLoader());
+
+        for (final Iterator<PluginResourceLocatorService<PluginResource>> iter = serviceLoader.iterator(); iter.hasNext(); ) {
+            final PluginResourceLocatorService<PluginResource> next;
+
+            try {
+                next = iter.next();
+            } catch (final ServiceConfigurationError e) {
+                this.standardEnvironment.logger().error("Error encountered initializing plugin resource locator!", e);
+                continue;
+            }
+
+            this.logger().info("Plugin resource locator '{}' found.", next.name());
+            this.locatorServices.put(next.name(), next);
+        }
+    }
+
+    public void discoverLanguageServices() {
+        final ServiceLoader<PluginLanguageService<PluginResource>> serviceLoader = (ServiceLoader<PluginLanguageService<PluginResource>>) (Object) ServiceLoader.load(
+            PluginLanguageService.class, FabricPluginPlatform.class.getClassLoader());
+
+        for (final Iterator<PluginLanguageService<PluginResource>> iter = serviceLoader.iterator(); iter.hasNext(); ) {
+            final PluginLanguageService<PluginResource> next;
+
+            try {
+                next = iter.next();
+            } catch (final ServiceConfigurationError e) {
+                this.standardEnvironment.logger().error("Error encountered initializing plugin language service!", e);
+                continue;
+            }
+
+            this.logger().info("Plugin language loader '{}' found.", next.name());
+            this.languageServices.put(next.name(), next);
+        }
+    }
+
+    public void locatePluginResources() {
+        for (final Map.Entry<String, PluginResourceLocatorService<PluginResource>> locatorEntry : this.locatorServices.entrySet()) {
+            final PluginResourceLocatorService<PluginResource> locatorService = locatorEntry.getValue();
+            final Set<PluginResource> resources = locatorService.locatePluginResources(this.standardEnvironment);
+            if (!resources.isEmpty()) {
+                this.locatorResources.put(locatorEntry.getKey(), resources);
+            }
+        }
+    }
+
+    public void createPluginCandidates() {
+        for (final Map.Entry<String, PluginLanguageService<PluginResource>> languageEntry : this.languageServices.entrySet()) {
+            final PluginLanguageService<PluginResource> languageService = languageEntry.getValue();
+            for (final Map.Entry<String, Set<PluginResource>> resourcesEntry : this.locatorResources.entrySet()) {
+
+                for (final PluginResource pluginResource : resourcesEntry.getValue()) {
+                    try {
+                        final List<PluginCandidate<PluginResource>> candidates = languageService.createPluginCandidates(this.standardEnvironment,
+                            pluginResource);
+                        if (candidates.isEmpty()) {
+                            continue;
+                        }
+                        this.pluginCandidates.computeIfAbsent(languageService, k -> new LinkedList<>()).addAll(candidates);
+                    } catch (final Exception ex) {
+                        this.standardEnvironment.logger().error("Failed to create plugin candidates", ex);
+                    }
+                }
+            }
+        }
     }
 }
