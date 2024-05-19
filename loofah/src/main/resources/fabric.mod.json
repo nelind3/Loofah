@@ -27,7 +27,6 @@
     "mixins.loofah.json",
     "mixins.sponge.api.json",
     "mixins.sponge.accessors.json",
-    "mixins.sponge.bugfix.json",
     "mixins.sponge.concurrent.json",
     "mixins.sponge.core.json",
     "mixins.sponge.entityactivation.json",
