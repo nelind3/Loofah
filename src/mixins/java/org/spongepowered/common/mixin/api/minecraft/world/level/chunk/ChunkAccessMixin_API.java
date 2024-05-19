@@ -27,8 +27,8 @@ package org.spongepowered.common.mixin.api.minecraft.world.level.chunk;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.entity.Entity;
@@ -91,6 +91,10 @@ public abstract class ChunkAccessMixin_API<P extends Chunk<P>> implements Chunk<
 
     @Override
     public void setInhabitedTime(final Ticks newInhabitedTime) {
+        Objects.requireNonNull(newInhabitedTime);
+        if (newInhabitedTime.isInfinite()) {
+            throw new IllegalArgumentException("Inhabited time cannot be infinite!");
+        }
         this.shadow$setInhabitedTime(newInhabitedTime.ticks());
     }
 

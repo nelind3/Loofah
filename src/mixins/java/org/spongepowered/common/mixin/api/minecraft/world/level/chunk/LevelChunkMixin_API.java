@@ -123,14 +123,12 @@ public abstract class LevelChunkMixin_API extends ChunkAccess implements WorldCh
         if (!this.contains(x, y, z)) {
             throw new PositionOutOfBoundsException(new Vector3i(x, y, z), Constants.World.BLOCK_MIN, Constants.World.BLOCK_MAX);
         }
-        return (Biome) (Object) this.level.getBiome(new BlockPos(x, y, z));
+        return (Biome) (Object) this.level.getBiome(new BlockPos(x, y, z)).value();
     }
 
     @Override
     public boolean setBiome(final int x, final int y, final int z, final Biome biome) {
-        // TODO ChunkBiomeContainerAccessor is dead
-        //return VolumeStreamUtils.setBiomeOnNativeChunk(x, y, z, biome, () -> (ChunkBiomeContainerAccessor) this.biomes, () -> this.setUnsaved(true));
-        return false;
+        return VolumeStreamUtils.setBiomeOnNativeChunk(x, y, z, biome, () -> this.getSection(this.getSectionIndex(y)), () -> this.setUnsaved(true));
     }
 
     @Intrinsic
@@ -145,6 +143,10 @@ public abstract class LevelChunkMixin_API extends ChunkAccess implements WorldCh
 
     @Override
     public void setInhabitedTime(final Ticks newInhabitedTime) {
+        Objects.requireNonNull(newInhabitedTime);
+        if (newInhabitedTime.isInfinite()) {
+            throw new IllegalArgumentException("Inhabited time cannot be infinite!");
+        }
         this.setInhabitedTime(newInhabitedTime.ticks());
     }
 

@@ -32,7 +32,6 @@ import com.squareup.javapoet.WildcardTypeName;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.advancements.AdvancementType;
-import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.commands.Commands.CommandSelection;
 import net.minecraft.core.LayeredRegistryAccess;
 import net.minecraft.core.RegistryAccess;
@@ -56,14 +55,12 @@ import net.minecraft.world.entity.animal.TropicalFish;
 import net.minecraft.world.entity.animal.horse.Markings;
 import net.minecraft.world.entity.animal.horse.Variant;
 import net.minecraft.world.entity.vehicle.Boat;
-import net.minecraft.world.flag.FeatureFlags;
-import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.FireworkRocketItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.Rarity;
-import net.minecraft.world.level.DataPackConfig;
+import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.block.state.properties.BambooLeaves;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import org.tinylog.Logger;
@@ -148,7 +145,7 @@ public final class GeneratorMain {
         // and call to WorldStem.load in net.minecraft.server.Main
         // We don't currently try to load any datapacks here
         final var packRepository = ServerPacksSource.createVanillaTrustedRepository();
-        MinecraftServer.configurePackRepository(packRepository, DataPackConfig.DEFAULT, /* safeMode = */ false, FeatureFlags.DEFAULT_FLAGS);
+        MinecraftServer.configurePackRepository(packRepository, WorldDataConfiguration.DEFAULT, /* safeMode = */ false, true);
         final CloseableResourceManager resourceManager = new MultiPackResourceManager(PackType.SERVER_DATA, packRepository.openAllSelected());
 
         // WorldLoader.load
@@ -166,7 +163,7 @@ public final class GeneratorMain {
         final RegistryAccess.Frozen compositeRegistries = withDimensions.getAccessForLoading(RegistryLayer.RELOADABLE);
         final var resourcesFuture = ReloadableServerResources.loadResources(
             resourceManager,
-            compositeRegistries,
+            withDimensions,
             packRepository.getRequestedFeatureFlags(),
             CommandSelection.ALL,
             2, // functionPermissionLevel
@@ -177,7 +174,7 @@ public final class GeneratorMain {
                 resourceManager.close();
             }
         }).thenApply(resources -> {
-            resources.updateRegistryTags(compositeRegistries);
+            resources.updateRegistryTags();
             return resources;
         });
 
@@ -206,12 +203,6 @@ public final class GeneratorMain {
         // Enum-backed (automatically-named) catalogs can be added later as necessary
         return List.of(
             new MapEntriesValidator<>(
-                "advancement.criteria.trigger",
-                "Triggers",
-                CriteriaTriggers.class,
-                "CRITERIA"
-            ),
-            new MapEntriesValidator<>(
                 "world.gamerule",
                 "GameRules",
                 GameRules.class,
@@ -228,8 +219,8 @@ public final class GeneratorMain {
             new EnumEntriesValidator<>(
                  "item",
                  "FireworkShapes",
-                  FireworkRocketItem.Shape.class,
-                 "getName",
+                  FireworkExplosion.Shape.class,
+                 "getSerializedName",
                  "sponge"
             ),
             new EnumEntriesValidator<>(
@@ -246,12 +237,12 @@ public final class GeneratorMain {
                  "getName",
                  "sponge"
             ),
-            new EnumEntriesValidator<>(
+            new RegistryEntriesGenerator<>(
                  "data.type",
                  "ArmorMaterials",
-                 ArmorMaterials.class,
-                 "getName",
-                 "sponge"
+                 "ARMOR_MATERIAL",
+                 context.relativeClass("data.type", "ArmorMaterial"),
+                 Registries.ARMOR_MATERIAL
             ),
             new EnumEntriesValidator<>(
                  "data.type",
@@ -306,7 +297,7 @@ public final class GeneratorMain {
                  "advancement",
                  "AdvancementTypes",
                  AdvancementType.class,
-                 "getName",
+                 "getSerializedName",
                  "sponge"
             ),
             new EnumEntriesValidator<>(
@@ -557,6 +548,15 @@ public final class GeneratorMain {
                 $ -> true, RegistryScope.GAME
             ),
             new RegistryEntriesGenerator<>(
+                "advancement.criteria.trigger",
+                "Triggers",
+                "TRIGGER",
+                ParameterizedTypeName.get(context.relativeClass("advancement.criteria.trigger", "Trigger"), WildcardTypeName.subtypeOf(Object.class)),
+                Registries.TRIGGER_TYPE,
+                $ -> true,
+                RegistryScope.GAME
+            ),
+            new RegistryEntriesGenerator<>(
                 "data.type",
                 "VillagerTypes",
                 "VILLAGER_TYPE",
@@ -574,7 +574,8 @@ public final class GeneratorMain {
             ),
             new BlockStateDataProviderGenerator(),
             new BlockStatePropertiesGenerator(),
-            new BlockStatePropertyKeysGenerator(),
+            // TODO fix me
+            //new BlockStatePropertyKeysGenerator(),
             new RegistryEntriesGenerator<>(
                     "world.generation.feature",
                     "PlacedFeatures",

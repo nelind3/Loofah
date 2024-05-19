@@ -1,4 +1,4 @@
-Sponge ![Java CI with Gradle](https://github.com/SpongePowered/Sponge/workflows/Java%20CI%20with%20Gradle/badge.svg?branch=api-8&event=push)
+Sponge ![Java CI with Gradle](https://github.com/SpongePowered/Sponge/workflows/Java%20CI%20with%20Gradle/badge.svg?branch=api-11&event=push)
 =============
 
 This is the Loofah repo fork of the upstream SpongeAPI implementation. For the Loofah README please see README.loofah.md.
@@ -28,7 +28,7 @@ The SpongeAPI implementation targeting vanilla Minecraft and 3rd party platforms
 
 
 ## Prerequisites
-* [Java] 8
+* [Java] 21
 
 ## Clone
 The following steps will ensure your project is cloned properly.
