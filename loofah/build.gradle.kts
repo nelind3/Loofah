@@ -21,6 +21,7 @@ plugins {
 }
 
 val commonProject = parent!!
+val apiJavaTarget: String by project
 val apiVersion: String by project
 val minecraftVersion: String by project
 val fabricLoaderVersion: String by project
@@ -150,7 +151,7 @@ dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings(loom.layered() {
         officialMojangMappings { nameSyntheticMembers = true }
-        parchment("org.parchmentmc.data:parchment-$minecraftVersion:2024.02.25")
+        parchment("org.parchmentmc.data:parchment-$minecraftVersion:2024.05.01")
     })
     gameManagedLibraries(modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")!!)
 
@@ -208,10 +209,16 @@ tasks {
     processResources {
         //dependsOn(named("mergeAccessWideners"))
 
+        inputs.property("javaVersion", apiJavaTarget)
+        inputs.property("minecraftVersion", minecraftVersion)
+        inputs.property("fabricLoaderVersion", fabricLoaderVersion)
         inputs.property("version", project.version)
 
         filesMatching("fabric.mod.json") {
             expand(
+                "javaVersion" to apiJavaTarget,
+                "minecraftVersion" to minecraftVersion,
+                "fabricLoaderVersion" to fabricLoaderVersion,
                 "version" to project.version
             )
         }
