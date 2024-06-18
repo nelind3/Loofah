@@ -70,6 +70,7 @@ val fabricLaunch by sourceSets.register("launch") {
     spongeImpl.applyNamedDependencyOnOutput(commonProject, launch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, main, this, project, this.implementationConfigurationName)
+
     spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
@@ -80,8 +81,11 @@ val fabricLaunch by sourceSets.register("launch") {
 
 val fabricAppLaunch by sourceSets.register("applaunch") {
     // implementation (compile) dependencies
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricLaunch, project, fabricLaunch.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, fabricLaunch, this, project, this.implementationConfigurationName)
+
+    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
@@ -240,7 +244,10 @@ tasks {
         from(fabricMain.output)
     }
 
+    remapJar.get().enabled = false
     register("remapShadowJar", RemapJarTask::class) {
+        build.get().finalizedBy(this)
+
         group = "shadow"
         archiveClassifier = "mod"
 
