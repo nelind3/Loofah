@@ -11,6 +11,9 @@ repositories {
     maven("https://repo.spongepowered.org/repository/maven-public/") {
         name = "SpongePowered"
     }
+    maven("https://maven.nelind.dk/releases") {
+        name = "Nelind"
+    }
 }
 
 plugins {
@@ -161,6 +164,7 @@ dependencies {
 
     // Mod dependencies
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
+    modRuntimeOnly(include("dk.nelind:papyrus:0.1.0+java.21")!!)
 
     // API dependencies
     fabricBootstrapLibrariesConfig(apiLibs.pluginSpi) {
@@ -181,6 +185,8 @@ dependencies {
         exclude("com.google.code.gson")
     }
     fabricLibrariesConfig(apiLibs.adventure.textSerializer.plain)
+    fabricLibrariesConfig(apiLibs.adventure.textSerializer.legacy)
+    fabricLibrariesConfig(libs.adventure.serializerConfigurate4)
     fabricLibrariesConfig(apiLibs.math)
     fabricLibrariesConfig(apiLibs.guice) {
         exclude("org.ow2.asm")

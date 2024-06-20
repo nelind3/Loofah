@@ -22,37 +22,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.applaunch.plugin;
+package dk.nelind.loofah.launch.plugin;
 
-import dk.nelind.loofah.launch.plugin.JavaPluginLoader;
-import org.spongepowered.plugin.Environment;
-import org.spongepowered.plugin.builtin.jvm.JVMPluginLanguageService;
-import org.spongepowered.plugin.metadata.Container;
-import org.spongepowered.plugin.metadata.builtin.MetadataParser;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.plugin.PluginCandidate;
+import org.spongepowered.plugin.builtin.jvm.JVMPluginContainer;
+import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.lang.invoke.MethodHandles;
+import java.util.Objects;
 
-public final class JavaPluginLanguageService extends JVMPluginLanguageService {
+public class FabricJavaPluginContainer extends JVMPluginContainer {
 
-    private final static String NAME = "java_plain";
+    private MethodHandles.Lookup lookup;
 
-    @Override
-    public String name() {
-        return JavaPluginLanguageService.NAME;
+    public FabricJavaPluginContainer(PluginCandidate<JVMPluginResource> candidate) {
+        super(candidate);
     }
 
     @Override
-    public String pluginLoader() {
-        return JavaPluginLoader.class.getName();
+    protected void initializeInstance(final Object instance) {
+        super.initializeInstance(instance);
+
+        Sponge.eventManager().registerListeners(this, instance);
     }
 
-    @Override
-    public Container loadMetadataContainer(final Environment environment, final InputStream stream) throws Exception {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-        return MetadataParser.read(reader, MetadataParser.gsonBuilder().create());
+    public MethodHandles.Lookup lookup() {
+        return this.lookup;
     }
 
+    public void initializeLookup(final MethodHandles.Lookup lookup) {
+        if (this.lookup != null) {
+            throw new RuntimeException(String.format("Attempt made to set the lookup for plugin container '%s' twice!",
+                this.metadata().id()));
+        }
+        this.lookup = Objects.requireNonNull(lookup);
+    }
 }

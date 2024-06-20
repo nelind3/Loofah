@@ -25,8 +25,10 @@
 package dk.nelind.loofah.applaunch;
 
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
+import dk.nelind.loofah.launch.FabricLaunch;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import org.spongepowered.common.applaunch.AppLaunch;
+import org.spongepowered.common.launch.Launch;
 
 public class AppLaunchMain implements PreLaunchEntrypoint {
     @Override
@@ -38,5 +40,7 @@ public class AppLaunchMain implements PreLaunchEntrypoint {
 
         pluginPlatform.locatePluginResources();
         pluginPlatform.createPluginCandidates();
+
+        Launch.setInstance(new FabricLaunch(pluginPlatform));
     }
 }

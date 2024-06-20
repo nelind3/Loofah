@@ -617,6 +617,9 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
         this.shadow$doCloseContainer();
     }
 
+    // TODO(loofah): This conflicts with Fabric API (God i hate overwrites sometimes). Replace with loofah specific
+    //  patch that uses injects and redirects instead.
+    //  (Test if reason for overwrite is still true. If not consider upstreaming)
     /**
      * @author blood - May 12th, 2016
      * @author gabizou - June 3rd, 2016
