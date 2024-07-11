@@ -29,21 +29,16 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
-import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.item.enchantment.Enchantment;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.slf4j.Logger;
 import org.spongepowered.api.data.SerializableDataHolder;
 import org.spongepowered.api.data.persistence.DataContainer;
 import org.spongepowered.api.data.persistence.DataView;
@@ -54,7 +49,6 @@ import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 import org.spongepowered.api.item.inventory.equipment.EquipmentType;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Interface.Remap;
@@ -67,6 +61,7 @@ import org.spongepowered.common.item.SpongeItemStack;
 import org.spongepowered.common.item.SpongeItemStackSnapshot;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
@@ -77,8 +72,6 @@ import javax.annotation.Nullable;
 public abstract class ItemStackMixin_API implements SerializableDataHolder.Mutable, ComponentLike, HoverEventSource<HoverEvent.ShowItem> {       // conflict from overriding ValueContainer#copy() from DataHolder
 
     // @formatter:off
-    @Shadow @Final private static Logger LOGGER;
-
     @Shadow public abstract int shadow$getCount();
     @Shadow public abstract void shadow$setCount(int size); // Do not use field directly as Minecraft tracks the empty state
     @Shadow public abstract int shadow$getMaxStackSize();
@@ -87,14 +80,10 @@ public abstract class ItemStackMixin_API implements SerializableDataHolder.Mutab
     @Shadow public abstract Item shadow$getItem();
     @Shadow public abstract net.minecraft.network.chat.Component shadow$getDisplayName();
     @Shadow public abstract void shadow$applyComponents(final DataComponentPatch $$0);
-    @Shadow public abstract DataComponentMap shadow$getComponents();
+    @Shadow public abstract DataComponentPatch shadow$getComponentsPatch();
     @Shadow @Nullable public abstract <T> T shadow$update(final DataComponentType<T> $$0, final T $$1, final UnaryOperator<T> $$2);
 
     // @formatter:on
-
-    @Shadow public abstract void enchant(final Enchantment $$0, final int $$1);
-
-    @Shadow public abstract Rarity getRarity();
 
     public int itemStack$quantity() {
         return this.shadow$getCount();
@@ -163,26 +152,15 @@ public abstract class ItemStackMixin_API implements SerializableDataHolder.Mutab
         Objects.requireNonNull(modifier, "Attribute modifier cannot be null");
         Objects.requireNonNull(equipmentType, "Equipment type cannot be null");
 
-        // TODO expose EquipmentSlotGroup?
-        var group = switch (((EquipmentSlot) (Object) equipmentType)) {
-            case MAINHAND -> EquipmentSlotGroup.MAINHAND;
-            case OFFHAND -> EquipmentSlotGroup.OFFHAND;
-            case FEET -> EquipmentSlotGroup.FEET;
-            case LEGS -> EquipmentSlotGroup.LEGS;
-            case CHEST -> EquipmentSlotGroup.CHEST;
-            case HEAD -> EquipmentSlotGroup.HEAD;
-            case BODY -> EquipmentSlotGroup.ANY; // TODO no mapping
-        };
-
         this.shadow$update(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY, component ->
-                component.withModifierAdded(Holder.direct((Attribute) attributeType),
+                component.withModifierAdded(BuiltInRegistries.ATTRIBUTE.wrapAsHolder((Attribute) attributeType),
                                             (net.minecraft.world.entity.ai.attributes.AttributeModifier) (Object) modifier,
-                                            group));
+                                            SpongeItemStack.asEquipmentSlotGroup(equipmentType)));
     }
 
     @Override
     public int contentVersion() {
-        return 1;
+        return 3;
     }
 
     @Override
@@ -213,10 +191,11 @@ public abstract class ItemStackMixin_API implements SerializableDataHolder.Mutab
 
     @Override
     public @NonNull HoverEvent<HoverEvent.ShowItem> asHoverEvent(@NonNull final UnaryOperator<HoverEvent.ShowItem> op) {
-        final HoverEvent.ShowItem event = HoverEvent.ShowItem.of(
+        final HoverEvent.ShowItem event = HoverEvent.ShowItem.showItem(
             SpongeAdventure.asAdventure(SpongeCommon.vanillaRegistry(Registries.ITEM).getKey(this.shadow$getItem())),
             this.shadow$getCount(),
-            SpongeAdventure.asBinaryTagHolder(this.shadow$getComponents())
+                Map.of()
+            //SpongeAdventure.asBinaryTagHolder(this.shadow$getComponentsPatch())
         );
         return HoverEvent.showItem(Objects.requireNonNull(op, "op").apply(event));
     }

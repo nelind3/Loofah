@@ -24,8 +24,12 @@
  */
 package org.spongepowered.common.hooks;
 
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.phys.AABB;
 
 public interface ItemHooks {
 
@@ -33,4 +37,11 @@ public interface ItemHooks {
         return enchantment.canEnchant(stack);
     }
 
+    default boolean canPerformSweepAttack(ItemStack heldItem) {
+        return heldItem.getItem() instanceof SwordItem;
+    }
+
+    default AABB getSweepingHitBox(Player player, ItemStack itemStack, Entity targetEntity) {
+        return targetEntity.getBoundingBox().inflate(1.0D, 0.25D, 1.0D);
+    }
 }

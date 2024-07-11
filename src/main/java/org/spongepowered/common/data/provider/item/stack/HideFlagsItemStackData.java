@@ -61,7 +61,10 @@ public final class HideFlagsItemStackData {
                         .set((h, v) -> h.set(DataComponents.CAN_PLACE_ON, HideFlagsItemStackData.newAdventureModePredicate(h, !v)))
                     .create(Keys.HIDE_ENCHANTMENTS)
                         .get(h -> ((ItemEnchantmentsAccessor)h.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)).accessor$showInTooltip())
-                        .set((h, v) -> h.set(DataComponents.ENCHANTMENTS, HideFlagsItemStackData.newItemEnchantments(h, v)))
+                        .set((h, v) -> h.set(DataComponents.ENCHANTMENTS, HideFlagsItemStackData.newItemEnchantments(h, !v)))
+                    .create(Keys.HIDE_STORED_ENCHANTMENTS)
+                        .get(h -> ((ItemEnchantmentsAccessor)h.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY)).accessor$showInTooltip())
+                        .set((h, v) -> h.set(DataComponents.STORED_ENCHANTMENTS, HideFlagsItemStackData.newItemEnchantments(h, !v)))
                     .create(Keys.HIDE_MISCELLANEOUS)
                         .get(h -> h.get(DataComponents.HIDE_ADDITIONAL_TOOLTIP) != Unit.INSTANCE)
                         .set((h, v) -> h.set(DataComponents.HIDE_ADDITIONAL_TOOLTIP, v ? Unit.INSTANCE : null))
@@ -71,7 +74,13 @@ public final class HideFlagsItemStackData {
                             if (h.has(DataComponents.UNBREAKABLE)) {
                                 h.set(DataComponents.UNBREAKABLE, new Unbreakable(v));
                             } // else TODO not supported?
-                        });
+                        })
+                    .create(Keys.HIDE_TOOLTIP)
+                        .get(h -> h.get(DataComponents.HIDE_ADDITIONAL_TOOLTIP) != Unit.INSTANCE)
+                        .set((h, v) -> h.set(DataComponents.HIDE_ADDITIONAL_TOOLTIP, v ? Unit.INSTANCE : null))
+        ;
+
+
         // TODO missing show_in_tooltip (DYED_COLOR, more?)
     }
     // @formatter:on

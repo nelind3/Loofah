@@ -26,6 +26,7 @@ package org.spongepowered.common.network.channel;
 
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.common.hooks.PlatformHooks;
 import org.spongepowered.common.util.Constants;
 
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ public final class ChannelUtils {
 
     public static ArrayList spongeChannelCodecs(final int maxPayloadSize) {
         ArrayList channels = new ArrayList<>();
-        channels.add(new CustomPacketPayload.TypeAndCodec<>(ChannelUtils.REGISTER, SpongeChannelPayload.streamCodec(ChannelUtils.REGISTER, maxPayloadSize)));
+        PlatformHooks.INSTANCE.getChannelHooks().registerPlatformChannels(c ->
+                channels.add(new CustomPacketPayload.TypeAndCodec<>(c, SpongeChannelPayload.streamCodec(c, maxPayloadSize))));
         Sponge.game().channelManager().channels().forEach(c ->
                 channels.add(new CustomPacketPayload.TypeAndCodec<>(((SpongeChannel) c).payloadType(), SpongeChannelPayload.streamCodec(((SpongeChannel) c).payloadType(), maxPayloadSize))));
         return channels;

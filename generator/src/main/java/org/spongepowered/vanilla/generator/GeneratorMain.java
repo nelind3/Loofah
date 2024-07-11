@@ -52,6 +52,7 @@ import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.entity.animal.TropicalFish;
+import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.entity.animal.horse.Markings;
 import net.minecraft.world.entity.animal.horse.Variant;
 import net.minecraft.world.entity.vehicle.Boat;
@@ -267,6 +268,13 @@ public final class GeneratorMain {
             ),
             new EnumEntriesValidator<>(
                  "data.type",
+                 "LlamaTypes",
+                 Llama.Variant.class,
+                 "getSerializedName",
+                 "sponge"
+            ),
+            new EnumEntriesValidator<>(
+                 "data.type",
                  "HorseColors",
                  Variant.class,
                  "getSerializedName",
@@ -460,7 +468,9 @@ public final class GeneratorMain {
                 "BannerPatternShapes",
                 "BANNER_PATTERN_SHAPE",
                 context.relativeClass("data.type", "BannerPatternShape"),
-                Registries.BANNER_PATTERN
+                Registries.BANNER_PATTERN,
+                $ -> true,
+                RegistryScope.SERVER
             ),
             new RegistryEntriesGenerator<>(
                 "data.type",

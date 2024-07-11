@@ -26,6 +26,7 @@ package org.spongepowered.common.data.provider.item.stack;
 
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.network.Filterable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -55,8 +56,7 @@ public final class BookItemStackData {
                             return LegacyComponentSerializer.legacySection().deserialize(content.author());
                         })
                         .set((h, v) -> {
-                            final WrittenBookContent content = h.get(DataComponents.WRITTEN_BOOK_CONTENT);
-                            // TODO handle missing data?
+                            final WrittenBookContent content = h.getOrDefault(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY);
                             final String author = LegacyComponentSerializer.legacySection().serialize(v);
                             h.set(DataComponents.WRITTEN_BOOK_CONTENT,
                                     new WrittenBookContent(content.title(), author, content.generation(), content.pages(), content.resolved()));
@@ -71,11 +71,10 @@ public final class BookItemStackData {
                             return content.generation();
                         })
                         .setAnd((h, v) -> {
-                            if (v < 0) {
+                            if (v < 0 || v > 3) {
                                 return false;
                             }
-                            final WrittenBookContent content = h.get(DataComponents.WRITTEN_BOOK_CONTENT);
-                            // TODO handle missing data?
+                            final WrittenBookContent content = h.getOrDefault(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY);
                             h.set(DataComponents.WRITTEN_BOOK_CONTENT,
                                     new WrittenBookContent(content.title(), content.author(), v, content.pages(), content.resolved()));
                             return true;
@@ -90,15 +89,13 @@ public final class BookItemStackData {
                             return content.pages().stream().map(Filterable::raw).map(SpongeAdventure::asAdventure).toList();
                         })
                         .set((h, v) -> {
-                            final WrittenBookContent content = h.get(DataComponents.WRITTEN_BOOK_CONTENT);
-                            // TODO handle missing data?
-                            var pages = v.stream().map(SpongeAdventure::asVanilla).map(Filterable::passThrough).toList();
+                            final WrittenBookContent content = h.getOrDefault(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY);
+                            var pages = v.stream().map(SpongeAdventure::asVanillaMutable).map(Component.class::cast).map(Filterable::passThrough).toList();
                             h.set(DataComponents.WRITTEN_BOOK_CONTENT,
                                     new WrittenBookContent(content.title(), content.author(), content.generation(), pages, content.resolved()));
                         })
                         .delete(h -> {
-                            final WrittenBookContent content = h.get(DataComponents.WRITTEN_BOOK_CONTENT);
-                            // TODO handle missing data?
+                            final WrittenBookContent content = h.getOrDefault(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY);
                             h.set(DataComponents.WRITTEN_BOOK_CONTENT,
                                     new WrittenBookContent(content.title(), content.author(), content.generation(), Collections.emptyList(), content.resolved()));
                         })

@@ -32,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.ItemLike;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.data.DataTransactionResult;
 import org.spongepowered.api.data.Key;
 import org.spongepowered.api.data.value.Value;
@@ -42,6 +43,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.common.accessor.world.item.component.CustomDataAccessor;
 import org.spongepowered.common.bridge.data.DataCompoundHolder;
 import org.spongepowered.common.bridge.data.DataHolderProcessor;
 import org.spongepowered.common.bridge.data.SpongeDataHolderBridge;
@@ -88,12 +90,16 @@ public abstract class ItemStackMixin implements SpongeDataHolderBridge, DataComp
 
     @Override
     public CompoundTag data$getCompound() {
-        return this.components.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).getUnsafe();
+        final @Nullable CustomData customData = this.components.get(DataComponents.CUSTOM_DATA);
+        if (customData != null && customData != CustomData.EMPTY) {
+            return customData.getUnsafe();
+        }
+        return null;
     }
 
     @Override
     public void data$setCompound(final CompoundTag nbt) {
-        this.components.set(DataComponents.CUSTOM_DATA, nbt == null ? CustomData.EMPTY : CustomData.of(nbt));
+        this.components.set(DataComponents.CUSTOM_DATA, nbt == null ? CustomData.EMPTY : CustomDataAccessor.invoker$new(nbt));
     }
 
     // Add our manipulators when creating copies from this ItemStack:

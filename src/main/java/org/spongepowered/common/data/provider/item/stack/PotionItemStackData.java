@@ -27,6 +27,7 @@ package org.spongepowered.common.data.provider.item.stack;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -58,7 +59,7 @@ public final class PotionItemStackData {
                         .set((h, v) -> h.update(DataComponents.POTION_CONTENTS, PotionContents.EMPTY, contents -> new PotionContents(contents.potion(), Optional.of(v.rgb()), contents.customEffects())))
                         .delete(h -> h.update(DataComponents.POTION_CONTENTS, PotionContents.EMPTY, contents -> new PotionContents(contents.potion(), Optional.empty(), contents.customEffects())))
                         .supports(h -> h.getItem() == Items.POTION || h.getItem() == Items.SPLASH_POTION || h.getItem() == Items.LINGERING_POTION || h.getItem() == Items.TIPPED_ARROW)
-                    .create(Keys.POTION_EFFECTS)
+                    .create(Keys.CUSTOM_POTION_EFFECTS)
                         .get(h -> {
                             final List<MobEffectInstance> effects = h.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).customEffects();
                             return effects.isEmpty() ? null : ImmutableList.copyOf((List<PotionEffect>) (Object) effects);
@@ -72,12 +73,19 @@ public final class PotionItemStackData {
                     .create(Keys.POTION_TYPE)
                         .get(h -> (PotionType) h.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion().map(Holder::value).orElse(null)) // TODO empty POTION gone?
                         .set((h, v) -> {
-                            final var potion = Optional.ofNullable(v).map(Potion.class::cast).map(Holder::direct); // TODO set empty POTION? same as delete?
+                            final var potion = Optional.ofNullable(v).map(Potion.class::cast).map(BuiltInRegistries.POTION::wrapAsHolder); // TODO set empty POTION? same as delete?
                             h.update(DataComponents.POTION_CONTENTS, PotionContents.EMPTY, contents -> new PotionContents(potion, contents.customColor(), contents.customEffects()));
                         })
                         .delete(h -> h.update(DataComponents.POTION_CONTENTS, PotionContents.EMPTY, contents -> new PotionContents(Optional.empty(), contents.customColor(), contents.customEffects())))
                         .supports(h -> h.getItem() == Items.POTION || h.getItem() == Items.SPLASH_POTION ||
-                                h.getItem() == Items.LINGERING_POTION || h.getItem() == Items.TIPPED_ARROW);
+                                h.getItem() == Items.LINGERING_POTION || h.getItem() == Items.TIPPED_ARROW)
+                    .create(Keys.POTION_EFFECTS)
+                        .get(h -> {
+                            final Iterable<MobEffectInstance> effects = h.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).getAllEffects();
+                            return ImmutableList.copyOf((List<PotionEffect>) (Object) effects);
+                        })
+                        .supports(h -> h.getItem() == Items.POTION || h.getItem() == Items.SPLASH_POTION || h.getItem() == Items.LINGERING_POTION || h.getItem() == Items.TIPPED_ARROW)
+        ;
     }
     // @formatter:on
 }
