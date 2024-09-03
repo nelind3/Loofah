@@ -32,6 +32,9 @@ import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
+/**
+ * Adapted from {@link org.spongepowered.vanilla.launch.plugin.VanillaJavaPluginContainer}
+ */
 public class FabricJavaPluginContainer extends JVMPluginContainer {
 
     private MethodHandles.Lookup lookup;

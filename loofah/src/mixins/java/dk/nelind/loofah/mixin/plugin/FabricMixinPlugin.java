@@ -27,6 +27,9 @@ package dk.nelind.loofah.mixin.plugin;
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
 import org.spongepowered.common.mixin.plugin.AbstractMixinConfigPlugin;
 
+/**
+ * Inspired by {@link org.spongepowered.forge.mixin.plugin.ForgeCorePlugin}
+ */
 public class FabricMixinPlugin extends AbstractMixinConfigPlugin {
     public FabricMixinPlugin() {
         FabricPluginPlatform.bootstrap();

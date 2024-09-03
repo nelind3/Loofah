@@ -37,6 +37,9 @@ import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
 
 import java.lang.invoke.MethodHandles;
 
+/**
+ * Adapted from {@link org.spongepowered.vanilla.launch.plugin.JavaPluginLoader}
+ */
 public class JavaPluginLoader extends JVMPluginLoader<JVMPluginResource, FabricJavaPluginContainer> {
 
     private final ArtifactVersion version = new DefaultArtifactVersion("1.0");

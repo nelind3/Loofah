@@ -44,6 +44,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**
+ * Adapted from {@link org.spongepowered.vanilla.applaunch.plugin.VanillaPluginPlatform} and
+ * {@link org.spongepowered.forge.applaunch.plugin.ForgePluginPlatform}
+ */
 public class FabricPluginPlatform implements PluginPlatform {
     private static volatile boolean bootstrapped;
 
