@@ -27,6 +27,7 @@ val commonProject = parent!!
 val apiJavaTarget: String by project
 val apiVersion: String by project
 val minecraftVersion: String by project
+val parchmentBuild: String by project
 val fabricLoaderVersion: String by project
 val fabricApiVersion: String by project
 val recommendedVersion: String by project
@@ -158,7 +159,8 @@ dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings(loom.layered() {
         officialMojangMappings { nameSyntheticMembers = true }
-        parchment("org.parchmentmc.data:parchment-$minecraftVersion:2024.05.01")
+        // Temporarily disabled since parchment doesn't have 1.21.1 versions yet
+        //parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentBuild")
     })
     gameManagedLibraries(modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")!!)
 
