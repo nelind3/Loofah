@@ -24,10 +24,15 @@
  */
 package org.spongepowered.common.mixin.core.world.level;
 
+import com.mojang.serialization.Dynamic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.Mob;
@@ -46,6 +51,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.storage.WritableLevelData;
+import net.minecraft.world.phys.AABB;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.ResourceKey;
@@ -59,9 +65,14 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.SpongeCommon;
 import org.spongepowered.common.accessor.world.entity.MobAccessor;
 import org.spongepowered.common.accessor.world.entity.item.FallingBlockEntityAccessor;
+import org.spongepowered.common.bridge.data.VanishableBridge;
 import org.spongepowered.common.bridge.world.level.LevelBridge;
 import org.spongepowered.common.data.persistence.NBTTranslator;
 import org.spongepowered.common.entity.projectile.UnknownProjectileSource;
@@ -98,8 +109,6 @@ public abstract class LevelMixin implements LevelBridge, LevelAccessor {
     // @formatter on
 
 
-
-
     @Override
     public boolean bridge$isFake() {
         return this.isClientSide();
@@ -113,13 +122,14 @@ public abstract class LevelMixin implements LevelBridge, LevelAccessor {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <E extends org.spongepowered.api.entity.Entity> E bridge$createEntity(
-            final DataContainer dataContainer,
-            final @Nullable Vector3d position,
-            final @Nullable Predicate<Vector3d> positionCheck) throws IllegalArgumentException, IllegalStateException {
+        final DataContainer dataContainer,
+        final @Nullable Vector3d position,
+        final @Nullable Predicate<Vector3d> positionCheck) throws IllegalArgumentException, IllegalStateException {
 
         final EntityType<@NonNull ?> type = dataContainer.getRegistryValue(Constants.Entity.TYPE, RegistryTypes.ENTITY_TYPE)
-                .orElseThrow(() -> new IllegalArgumentException("DataContainer does not contain a valid entity type."));
+            .orElseThrow(() -> new IllegalArgumentException("DataContainer does not contain a valid entity type."));
         final Vector3d proposedPosition;
         if (position == null) {
             proposedPosition = DataUtil.getPosition3d(dataContainer, Constants.Sponge.SNAPSHOT_WORLD_POSITION);
@@ -129,9 +139,9 @@ public abstract class LevelMixin implements LevelBridge, LevelAccessor {
 
         if (positionCheck != null && !positionCheck.test(proposedPosition)) {
             throw new IllegalArgumentException(String.format("Position (%.2f, %.2f, %.2f) is not a valid position in this context.",
-                    proposedPosition.x(),
-                    proposedPosition.y(),
-                    proposedPosition.z()));
+                proposedPosition.x(),
+                proposedPosition.y(),
+                proposedPosition.z()));
         }
 
         final @Nullable Vector3d rotation;
@@ -152,10 +162,11 @@ public abstract class LevelMixin implements LevelBridge, LevelAccessor {
         dataContainer.getView(Constants.Sponge.UNSAFE_NBT)
                 .map(NBTTranslator.INSTANCE::translate)
                 .ifPresent(x -> {
-                    final net.minecraft.world.entity.Entity e = ((net.minecraft.world.entity.Entity) createdEntity);
+                    final var dataFixed = DataFixers.getDataFixer().update(References.ENTITY, new Dynamic<>(NbtOps.INSTANCE, x), 3692, 3833);
+                    final var e = ((net.minecraft.world.entity.Entity) createdEntity);
                     // mimicing Entity#restoreFrom
-                    x.remove("Dimension");
-                    e.load(x);
+                    dataFixed.remove("Dimension");
+                    e.load((CompoundTag) dataFixed.getValue());
                     // position needs a reset
                     e.moveTo(proposedPosition.x(), proposedPosition.y(), proposedPosition.z());
                 });
@@ -225,7 +236,7 @@ public abstract class LevelMixin implements LevelBridge, LevelAccessor {
         if (naturally && entity instanceof Mob) {
             // Adding the default equipment
             final DifficultyInstance difficulty = this.shadow$getCurrentDifficultyAt(new BlockPos((int) x, (int) y, (int) z));
-            ((MobAccessor)entity).invoker$populateDefaultEquipmentSlots(this.random, difficulty);
+            ((MobAccessor) entity).invoker$populateDefaultEquipmentSlots(this.random, difficulty);
         }
 
         if (entity instanceof Painting) {
@@ -236,4 +247,29 @@ public abstract class LevelMixin implements LevelBridge, LevelAccessor {
 
         return (E) entity;
     }
+
+    @Inject(method = {
+        "getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;",
+        "getEntities(Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;",
+    }, at = @At("RETURN"))
+    private void impl$IgnoreTargetingOfVanishedEntities(
+        final @Coerce Object entityIn, final AABB aabb,
+        final Predicate<?> filter, final CallbackInfoReturnable<List<net.minecraft.world.entity.Entity>> cir
+    ) {
+        if (this.bridge$isFake()) {
+            return;
+        }
+        final List<net.minecraft.world.entity.Entity> entities = cir.getReturnValue();
+        if (entities == null || entities.isEmpty()) {
+            return;
+        }
+        entities.removeIf(entity -> {
+            if (entity instanceof VanishableBridge vb) {
+                final var state = vb.bridge$vanishState();
+                return state.invisible() && state.untargetable();
+            }
+            return false;
+        });
+    }
+
 }

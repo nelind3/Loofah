@@ -161,8 +161,8 @@ public abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet
         this.impl$version = new SpongeMinecraftVersion(String.valueOf(version), version);
     }
 
-    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;)V", at = @At(value = "HEAD"), cancellable = true)
-    private void impl$onSend(final Packet<?> $$0, final @Nullable PacketSendListener $$1, final CallbackInfo ci) {
+    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;Z)V", at = @At(value = "HEAD"), cancellable = true)
+    private void impl$onSend(final Packet<?> $$0, final @Nullable PacketSendListener $$1, final boolean $$2, final CallbackInfo ci) {
         if (this.disconnectionHandled) {
             if ($$1 instanceof final PacketSender.SpongePacketSendListener spongeListener) {
                 spongeListener.accept(new IOException("Connection has been closed."));
@@ -209,7 +209,7 @@ public abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet
         }
     }
 
-    @Inject(method = "disconnect", at = @At(value = "INVOKE", target = "Lio/netty/channel/ChannelFuture;awaitUninterruptibly()Lio/netty/channel/ChannelFuture;"), cancellable = true)
+    @Inject(method = "disconnect(Lnet/minecraft/network/DisconnectionDetails;)V", at = @At(value = "INVOKE", target = "Lio/netty/channel/ChannelFuture;awaitUninterruptibly()Lio/netty/channel/ChannelFuture;"), cancellable = true)
     private void impl$disconnectAsync(final CallbackInfo ci) {
         ci.cancel(); //This can cause deadlock within the event loop
 
@@ -222,6 +222,17 @@ public abstract class ConnectionMixin extends SimpleChannelInboundHandler<Packet
     private void impl$onIsConnected(final CallbackInfoReturnable<Boolean> cir) {
         if (this.impl$disconnected) {
             cir.setReturnValue(false);
+        }
+    }
+
+    @Redirect(method = "genericsFtw", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/network/protocol/Packet;handle(Lnet/minecraft/network/PacketListener;)V"))
+    private static <T extends PacketListener> void impl$logPacketError(Packet<T> $$0, PacketListener $$1) {
+        try {
+            $$0.handle((T)$$1);
+        } catch (ExceptionInInitializerError e) {
+            SpongeCommon.logger().error("Error handling packet " + $$0.getClass(), e);
+            throw e;
         }
     }
 

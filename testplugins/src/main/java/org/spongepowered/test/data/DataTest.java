@@ -324,8 +324,8 @@ public final class DataTest  {
         armorStand.equip(EquipmentTypes.FEET.get(), ItemStack.of(ItemTypes.CHAINMAIL_BOOTS));
         armorStand.equip(EquipmentTypes.HEAD.get(), ItemStack.of(ItemTypes.GOLDEN_HELMET));
         armorStand.equip(EquipmentTypes.LEGS.get(), ItemStack.of(ItemTypes.DIAMOND_LEGGINGS));
-        armorStand.equip(EquipmentTypes.MAIN_HAND.get(), ItemStack.of(ItemTypes.DIAMOND));
-        armorStand.equip(EquipmentTypes.OFF_HAND.get(), ItemStack.of(ItemTypes.DIAMOND));
+        armorStand.equip(EquipmentTypes.MAINHAND.get(), ItemStack.of(ItemTypes.DIAMOND));
+        armorStand.equip(EquipmentTypes.OFFHAND.get(), ItemStack.of(ItemTypes.DIAMOND));
 
         armorStand.offer(Keys.BODY_ROTATIONS, Map.of(BodyParts.CHEST.get(), Vector3d.RIGHT));
 
@@ -946,7 +946,7 @@ public final class DataTest  {
         this.checkOfferData(wolf, Keys.IS_TAMED, true);
 
         final Entity villager = world.createEntity(EntityTypes.VILLAGER.get(), position);
-        this.checkGetData(villager, Keys.IS_TRADING, false);
+        this.checkGetData(villager, Keys.CUSTOMER, null);
 
         final Entity ocelot = world.createEntity(EntityTypes.OCELOT.get(), position);
         this.checkOfferData(ocelot, Keys.IS_TRUSTING, true);
@@ -1257,10 +1257,10 @@ public final class DataTest  {
         this.checkOfferData(minecartEntity, Keys.VELOCITY, Vector3d.FORWARD);
         this.checkOfferData(minecartEntity, Keys.SWIFTNESS, 2.0);
 
-        this.checkOfferData(horse, Keys.TAMER, player.uniqueId());
-        this.checkOfferData(wolf, Keys.TAMER, player.uniqueId());
-        this.checkOfferData(parrot, Keys.TAMER, player.uniqueId());
-        this.checkOfferData(parrot, Keys.TAMER, null);
+        this.checkOfferData(horse, Keys.OWNER, player.uniqueId());
+        this.checkOfferData(wolf, Keys.OWNER, player.uniqueId());
+        this.checkOfferData(parrot, Keys.OWNER, player.uniqueId());
+        this.checkOfferData(parrot, Keys.OWNER, null);
 
         this.checkOfferData(zombifiedPiglin, Keys.TARGET_ENTITY, player);
         this.checkOfferData(shulkerBullet, Keys.TARGET_ENTITY, sheep);
