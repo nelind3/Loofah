@@ -87,9 +87,10 @@ val fabricAppLaunch by sourceSets.register("applaunch") {
     // implementation (compile) dependencies
     spongeImpl.applyNamedDependencyOnOutput(commonProject, launch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, fabricLaunch, this, project, this.implementationConfigurationName)
 
     spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricLaunch, project, fabricLaunch.implementationConfigurationName)
+
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
@@ -179,6 +180,7 @@ dependencies {
         exclude("com.google.code.gson")
     }
     fabricBootstrapLibrariesConfig(apiLibs.configurate.yaml)
+    fabricBootstrapLibrariesConfig(apiLibs.guice)
     fabricLibrariesConfig("org.spongepowered:spongeapi:$apiVersion") { isTransitive = false }
     fabricLibrariesConfig(platform(apiLibs.adventure.bom))
     fabricLibrariesConfig(apiLibs.adventure.api)

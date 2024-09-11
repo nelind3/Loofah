@@ -25,15 +25,15 @@
 package dk.nelind.loofah.applaunch;
 
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
-import dk.nelind.loofah.launch.FabricLaunch;
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
 import org.spongepowered.common.applaunch.AppLaunch;
-import org.spongepowered.common.launch.Launch;
+
+import java.lang.reflect.InvocationTargetException;
 
 public class AppLaunchMain implements PreLaunchEntrypoint {
     @Override
     public void onPreLaunch() {
-        FabricPluginPlatform pluginPlatform = AppLaunch.pluginPlatform();
+        final FabricPluginPlatform pluginPlatform = AppLaunch.pluginPlatform();
 
         pluginPlatform.discoverLocatorServices();
         pluginPlatform.discoverLanguageServices();
@@ -41,6 +41,14 @@ public class AppLaunchMain implements PreLaunchEntrypoint {
         pluginPlatform.locatePluginResources();
         pluginPlatform.createPluginCandidates();
 
-        Launch.setInstance(new FabricLaunch(pluginPlatform));
+
+        // reflection call to avoid circular gradle task dependency hell
+        try {
+            Class.forName("dk.nelind.loofah.launch.FabricLaunch")
+                .getMethod("launch", FabricPluginPlatform.class)
+                .invoke(null, pluginPlatform);
+        } catch (IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

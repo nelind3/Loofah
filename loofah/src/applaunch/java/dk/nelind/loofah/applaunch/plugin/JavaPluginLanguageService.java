@@ -24,7 +24,6 @@
  */
 package dk.nelind.loofah.applaunch.plugin;
 
-import dk.nelind.loofah.launch.plugin.JavaPluginLoader;
 import org.spongepowered.plugin.Environment;
 import org.spongepowered.plugin.builtin.jvm.JVMPluginLanguageService;
 import org.spongepowered.plugin.metadata.Container;
@@ -49,7 +48,8 @@ public final class JavaPluginLanguageService extends JVMPluginLanguageService {
 
     @Override
     public String pluginLoader() {
-        return JavaPluginLoader.class.getName();
+        // hard coded string to avoid circular gradle task dependency hell
+        return "dk.nelind.loofah.launch.plugin.JavaPluginLoader";
     }
 
     @Override

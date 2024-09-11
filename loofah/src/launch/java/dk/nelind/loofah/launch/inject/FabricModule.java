@@ -22,13 +22,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.main;
+package dk.nelind.loofah.launch.inject;
 
-import net.fabricmc.api.ModInitializer;
+import com.google.inject.AbstractModule;
 
-public class Loofah implements ModInitializer {
+// TODO(loofah): finish platform injector
+public class FabricModule  extends AbstractModule {
     @Override
-    public void onInitialize() {
-        /** Hook into lifecycle based on {@link org.spongepowered.forge.SpongeForgeMod} */
+    protected void configure() {
+        //this.bind(Platform.class).to();
+        //this.bind(EventManager.class).toProvider();
+        //this.bind(SpongeCommandManager.class).to();
     }
 }

@@ -32,10 +32,7 @@ import org.spongepowered.common.applaunch.AppLaunch;
 import org.spongepowered.common.applaunch.config.core.SpongeConfigs;
 import org.spongepowered.common.applaunch.plugin.PluginPlatform;
 import org.spongepowered.common.applaunch.plugin.PluginPlatformConstants;
-import org.spongepowered.plugin.PluginCandidate;
-import org.spongepowered.plugin.PluginLanguageService;
-import org.spongepowered.plugin.PluginResource;
-import org.spongepowered.plugin.PluginResourceLocatorService;
+import org.spongepowered.plugin.*;
 import org.spongepowered.plugin.blackboard.Keys;
 import org.spongepowered.plugin.builtin.StandardEnvironment;
 import org.spongepowered.plugin.builtin.jvm.JVMKeys;
@@ -85,6 +82,10 @@ public class FabricPluginPlatform implements PluginPlatform {
         pluginPlatform.setMetadataFilePath(PluginPlatformConstants.METADATA_FILE_LOCATION);
 
         FabricPluginPlatform.bootstrapped = true;
+    }
+
+    public Environment getStandardEnvironment() {
+        return this.standardEnvironment;
     }
 
     @Override
