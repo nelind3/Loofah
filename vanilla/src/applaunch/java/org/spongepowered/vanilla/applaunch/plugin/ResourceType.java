@@ -22,16 +22,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.forge.hook;
+package org.spongepowered.vanilla.applaunch.plugin;
 
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
-import org.spongepowered.common.hooks.ItemHooks;
+import cpw.mods.jarhandling.SecureJar;
+import org.spongepowered.plugin.PluginResource;
 
-public class ForgeItemHooks implements ItemHooks {
+import java.util.Locale;
 
-    @Override
-    public boolean canEnchantmentBeAppliedToItem(Enchantment enchantment, ItemStack stack) {
-        return stack.canApplyAtEnchantingTable(enchantment);
+public enum ResourceType {
+    SERVICE, // service layer
+    LANGUAGE, // plugin layer
+    PLUGIN; // game layer
+
+    public static final String PROPERTY_NAME = "Resource-Type";
+
+    public static ResourceType of(final PluginResource resource) {
+        return ResourceType.fromName(resource.property(PROPERTY_NAME).orElse(null));
+    }
+
+    public static ResourceType of(final SecureJar jar) {
+        return ResourceType.fromName(jar.moduleDataProvider().getManifest().getMainAttributes().getValue(PROPERTY_NAME));
+    }
+
+    public static ResourceType fromName(final String name) {
+        return name == null ? ResourceType.PLUGIN : ResourceType.valueOf(name.toUpperCase(Locale.ROOT));
     }
 }

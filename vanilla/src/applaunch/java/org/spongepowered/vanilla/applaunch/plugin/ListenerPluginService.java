@@ -22,16 +22,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.forge.hook;
+package org.spongepowered.vanilla.applaunch.plugin;
 
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
-import org.spongepowered.common.hooks.ItemHooks;
+import cpw.mods.modlauncher.serviceapi.ILaunchPluginService;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.transformers.modlauncher.ListenerTransformerHelper;
 
-public class ForgeItemHooks implements ItemHooks {
+import java.util.EnumSet;
+
+public class ListenerPluginService implements ILaunchPluginService {
+    private static final EnumSet<Phase> YAY = EnumSet.of(Phase.AFTER);
+    private static final EnumSet<Phase> NAY = EnumSet.noneOf(Phase.class);
 
     @Override
-    public boolean canEnchantmentBeAppliedToItem(Enchantment enchantment, ItemStack stack) {
-        return stack.canApplyAtEnchantingTable(enchantment);
+    public String name() {
+        return "listener";
+    }
+
+    @Override
+    public EnumSet<Phase> handlesClass(Type classType, boolean isEmpty) {
+        return isEmpty ? NAY : YAY;
+    }
+
+    @Override
+    public int processClassWithFlags(final Phase phase, final ClassNode classNode, final Type classType, final String reason) {
+        if (ListenerTransformerHelper.shouldTransform(classNode)) {
+            ListenerTransformerHelper.transform(classNode);
+            return ComputeFlags.COMPUTE_FRAMES;
+        }
+        return ComputeFlags.NO_REWRITE;
     }
 }
