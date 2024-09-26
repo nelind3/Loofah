@@ -1,4 +1,5 @@
 import net.fabricmc.loom.task.RemapJarTask
+import net.fabricmc.loom.task.RunGameTask
 
 repositories {
     mavenCentral()
@@ -24,6 +25,7 @@ plugins {
 }
 
 val commonProject = parent!!
+val testPluginsProject: Project? = rootProject.subprojects.find { "testplugins" == it.name }
 val apiJavaTarget: String by project
 val apiVersion: String by project
 val minecraftVersion: String by project
@@ -145,6 +147,18 @@ loom {
 
     runConfigs.configureEach {
         isIdeConfigGenerated = true
+        testPluginsProject?.also {
+            val plugins: FileCollection = it.sourceSets.getByName("main").output
+            environmentVariable("SPONGE_PLUGINS", plugins.joinToString("&"))
+        }
+    }
+}
+
+tasks {
+    withType(RunGameTask::class.java).configureEach {
+        testPluginsProject?.also {
+            dependsOn(it.sourceSets.getByName("main").output)
+        }
     }
 }
 
