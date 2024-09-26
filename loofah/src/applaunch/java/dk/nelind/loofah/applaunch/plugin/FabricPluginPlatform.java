@@ -24,6 +24,7 @@
  */
 package dk.nelind.loofah.applaunch.plugin;
 
+import dk.nelind.loofah.applaunch.plugin.resource.FabricPluginResource;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import org.apache.logging.log4j.LogManager;
@@ -49,11 +50,11 @@ public class FabricPluginPlatform implements PluginPlatform {
     private static volatile boolean bootstrapped;
 
     private final StandardEnvironment standardEnvironment;
-    private final Map<String, PluginResourceLocatorService<PluginResource>> locatorServices;
-    private final Map<String, PluginLanguageService<PluginResource>> languageServices;
+    private final Map<String, PluginResourceLocatorService<?>> locatorServices;
+    private final Map<String, PluginLanguageService> languageServices;
 
-    private final Map<String, Set<PluginResource>> locatorResources;
-    private final Map<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> pluginCandidates;
+    private final Map<String, Set<? extends PluginResource>> locatorResources;
+    private final Map<PluginLanguageService, List<PluginCandidate>> pluginCandidates;
 
     public FabricPluginPlatform() {
         this.locatorServices = new HashMap<>();
@@ -95,7 +96,7 @@ public class FabricPluginPlatform implements PluginPlatform {
 
     @Override
     public void setVersion(String version) {
-        this.standardEnvironment.blackboard().getOrCreate(Keys.VERSION, () -> version);
+        this.standardEnvironment.blackboard().set(Keys.VERSION, version);
     }
 
     @Override
@@ -110,7 +111,7 @@ public class FabricPluginPlatform implements PluginPlatform {
 
     @Override
     public void setBaseDirectory(Path path) {
-        this.standardEnvironment.blackboard().getOrCreate(Keys.BASE_DIRECTORY, () -> path);
+        this.standardEnvironment.blackboard().set(Keys.BASE_DIRECTORY, path);
     }
 
     @Override
@@ -120,41 +121,40 @@ public class FabricPluginPlatform implements PluginPlatform {
 
     @Override
     public void setPluginDirectories(List<Path> list) {
-        this.standardEnvironment.blackboard().getOrCreate(Keys.PLUGIN_DIRECTORIES, () -> list);
+        this.standardEnvironment.blackboard().set(Keys.PLUGIN_DIRECTORIES, list);
     }
 
     @Override
     public String metadataFilePath() {
-        return this.standardEnvironment.blackboard().get(JVMKeys.METADATA_FILE_PATH);
+        return this.standardEnvironment.blackboard().get(Keys.METADATA_FILE_PATH);
     }
 
     @Override
     public void setMetadataFilePath(String path) {
-        this.standardEnvironment.blackboard().getOrCreate(JVMKeys.METADATA_FILE_PATH, () -> path);
+        this.standardEnvironment.blackboard().set(Keys.METADATA_FILE_PATH, path);
     }
 
-    public Map<String, PluginResourceLocatorService<PluginResource>> getLocatorServices() {
+    public Map<String, PluginResourceLocatorService<? extends PluginResource>> getLocatorServices() {
         return Collections.unmodifiableMap(this.locatorServices);
     }
 
-    public Map<String, PluginLanguageService<PluginResource>> getLanguageServices() {
+    public Map<String, PluginLanguageService> getLanguageServices() {
         return Collections.unmodifiableMap(this.languageServices);
     }
 
-    public Map<String, Set<PluginResource>> getResources() {
+    public Map<String, Set<? extends PluginResource>> getResources() {
         return Collections.unmodifiableMap(this.locatorResources);
     }
 
-    public Map<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> getCandidates() {
+    public Map<PluginLanguageService, List<PluginCandidate>> getCandidates() {
         return Collections.unmodifiableMap(this.pluginCandidates);
     }
 
     public void discoverLocatorServices() {
-        final ServiceLoader<PluginResourceLocatorService<PluginResource>> serviceLoader = (ServiceLoader<PluginResourceLocatorService<PluginResource>>) (Object) ServiceLoader.load(
-            PluginResourceLocatorService.class, FabricPluginPlatform.class.getClassLoader());
+        final var serviceLoader = ServiceLoader.load(PluginResourceLocatorService.class, FabricPluginPlatform.class.getClassLoader());
 
-        for (final Iterator<PluginResourceLocatorService<PluginResource>> iter = serviceLoader.iterator(); iter.hasNext(); ) {
-            final PluginResourceLocatorService<PluginResource> next;
+        for (final var iter = serviceLoader.iterator(); iter.hasNext(); ) {
+            final PluginResourceLocatorService<?> next;
 
             try {
                 next = iter.next();
@@ -169,11 +169,14 @@ public class FabricPluginPlatform implements PluginPlatform {
     }
 
     public void discoverLanguageServices() {
-        final ServiceLoader<PluginLanguageService<PluginResource>> serviceLoader = (ServiceLoader<PluginLanguageService<PluginResource>>) (Object) ServiceLoader.load(
-            PluginLanguageService.class, FabricPluginPlatform.class.getClassLoader());
+        this.standardEnvironment.blackboard().set(JVMKeys.JVM_PLUGIN_RESOURCE_FACTORY, FabricPluginResource::new);
+        this.standardEnvironment.blackboard().set(JVMKeys.ENVIRONMENT_LOCATOR_VARIABLE_NAME, "SPONGE_PLUGINS");
+        final ServiceLoader<PluginLanguageService> serviceLoader = ServiceLoader.load(
+            PluginLanguageService.class, FabricPluginPlatform.class.getClassLoader()
+        );
 
-        for (final Iterator<PluginLanguageService<PluginResource>> iter = serviceLoader.iterator(); iter.hasNext(); ) {
-            final PluginLanguageService<PluginResource> next;
+        for (final Iterator<PluginLanguageService> iter = serviceLoader.iterator(); iter.hasNext(); ) {
+            final PluginLanguageService next;
 
             try {
                 next = iter.next();
@@ -188,9 +191,9 @@ public class FabricPluginPlatform implements PluginPlatform {
     }
 
     public void locatePluginResources() {
-        for (final Map.Entry<String, PluginResourceLocatorService<PluginResource>> locatorEntry : this.locatorServices.entrySet()) {
-            final PluginResourceLocatorService<PluginResource> locatorService = locatorEntry.getValue();
-            final Set<PluginResource> resources = locatorService.locatePluginResources(this.standardEnvironment);
+        for (final Map.Entry<String, PluginResourceLocatorService<?>> locatorEntry : this.locatorServices.entrySet()) {
+            final PluginResourceLocatorService<?> locatorService = locatorEntry.getValue();
+            final Set<? extends PluginResource> resources = locatorService.locatePluginResources(this.standardEnvironment);
             if (!resources.isEmpty()) {
                 this.locatorResources.put(locatorEntry.getKey(), resources);
             }
@@ -198,13 +201,12 @@ public class FabricPluginPlatform implements PluginPlatform {
     }
 
     public void createPluginCandidates() {
-        for (final Map.Entry<String, PluginLanguageService<PluginResource>> languageEntry : this.languageServices.entrySet()) {
-            final PluginLanguageService<PluginResource> languageService = languageEntry.getValue();
-            for (final Map.Entry<String, Set<PluginResource>> resourcesEntry : this.locatorResources.entrySet()) {
+        for (final PluginLanguageService languageService : this.languageServices.values()) {
+            for (final Set<? extends PluginResource> resources : this.locatorResources.values()) {
 
-                for (final PluginResource pluginResource : resourcesEntry.getValue()) {
+                for (final PluginResource pluginResource : resources) {
                     try {
-                        final List<PluginCandidate<PluginResource>> candidates = languageService.createPluginCandidates(this.standardEnvironment,
+                        final List<PluginCandidate> candidates = languageService.createPluginCandidates(this.standardEnvironment,
                             pluginResource);
                         if (candidates.isEmpty()) {
                             continue;

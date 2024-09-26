@@ -32,15 +32,14 @@ import org.spongepowered.common.launch.Launch;
 import org.spongepowered.plugin.Environment;
 import org.spongepowered.plugin.InvalidPluginException;
 import org.spongepowered.plugin.PluginCandidate;
-import org.spongepowered.plugin.builtin.jvm.JVMPluginLoader;
-import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
+import org.spongepowered.plugin.PluginLoader;
 
 import java.lang.invoke.MethodHandles;
 
 /**
  * Adapted from {@link org.spongepowered.vanilla.launch.plugin.JavaPluginLoader}
  */
-public class JavaPluginLoader extends JVMPluginLoader<JVMPluginResource, FabricJavaPluginContainer> {
+public class JavaPluginLoader implements PluginLoader<FabricJavaPluginContainer> {
 
     private final ArtifactVersion version = new DefaultArtifactVersion("1.0");
 
@@ -54,7 +53,7 @@ public class JavaPluginLoader extends JVMPluginLoader<JVMPluginResource, FabricJ
     @Override
     public FabricJavaPluginContainer loadPlugin(
         final Environment environment,
-        final PluginCandidate<JVMPluginResource> candidate,
+        final PluginCandidate candidate,
         final ClassLoader targetClassLoader
     ) throws InvalidPluginException {
         final FabricJavaPluginContainer container = new FabricJavaPluginContainer(candidate);

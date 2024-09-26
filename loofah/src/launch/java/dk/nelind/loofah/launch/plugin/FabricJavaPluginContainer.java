@@ -26,8 +26,7 @@ package dk.nelind.loofah.launch.plugin;
 
 import org.spongepowered.api.Sponge;
 import org.spongepowered.plugin.PluginCandidate;
-import org.spongepowered.plugin.builtin.jvm.JVMPluginContainer;
-import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
+import org.spongepowered.plugin.builtin.StandardPluginContainer;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
@@ -35,11 +34,11 @@ import java.util.Objects;
 /**
  * Adapted from {@link org.spongepowered.vanilla.launch.plugin.VanillaJavaPluginContainer}
  */
-public class FabricJavaPluginContainer extends JVMPluginContainer {
+public class FabricJavaPluginContainer extends StandardPluginContainer {
 
     private MethodHandles.Lookup lookup;
 
-    public FabricJavaPluginContainer(PluginCandidate<JVMPluginResource> candidate) {
+    public FabricJavaPluginContainer(PluginCandidate candidate) {
         super(candidate);
     }
 

@@ -25,7 +25,7 @@
 package dk.nelind.loofah.applaunch.plugin;
 
 import org.spongepowered.plugin.Environment;
-import org.spongepowered.plugin.builtin.jvm.JVMPluginLanguageService;
+import org.spongepowered.plugin.builtin.StandardPluginLanguageService;
 import org.spongepowered.plugin.metadata.Container;
 import org.spongepowered.plugin.metadata.builtin.MetadataParser;
 
@@ -35,9 +35,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Adapted from {@link org.spongepowered.vanilla.launch.plugin.JavaPluginLanguageService}
+ * Adapted from {@link org.spongepowered.vanilla.applaunch.plugin.JavaPluginLanguageService}
  */
-public final class JavaPluginLanguageService extends JVMPluginLanguageService {
+public final class JavaPluginLanguageService extends StandardPluginLanguageService {
 
     private final static String NAME = "java_plain";
 

@@ -45,14 +45,12 @@ public class FabricPluginManager implements SpongePluginManager {
     private final Map<String, PluginContainer> plugins;
     private final Map<Object, PluginContainer> instancesToPlugins;
     private final List<PluginContainer> sortedPlugins;
-    private final Map<String, Set<PluginResource>> locatedResources;
     private final Map<PluginContainer, PluginResource> containerToResource;
 
     public FabricPluginManager() {
         this.plugins = new Object2ObjectOpenHashMap<>();
         this.instancesToPlugins = new IdentityHashMap<>();
         this.sortedPlugins = new ArrayList<>();
-        this.locatedResources = new Object2ObjectOpenHashMap<>();
         this.containerToResource = new Object2ObjectOpenHashMap<>();
     }
 
@@ -73,18 +71,16 @@ public class FabricPluginManager implements SpongePluginManager {
 
     @SuppressWarnings("unchecked")
     public void loadPlugins(final FabricPluginPlatform platform) {
-        this.locatedResources.putAll(platform.getResources());
-
-        final Map<PluginCandidate<PluginResource>, PluginLanguageService<PluginResource>> pluginLanguageLookup = new HashMap<>();
-        final Map<PluginLanguageService<PluginResource>, PluginLoader<PluginResource, PluginContainer>> pluginLoaders = new HashMap<>();
+        final Map<PluginCandidate, PluginLanguageService> pluginLanguageLookup = new HashMap<>();
+        final Map<PluginLanguageService, PluginLoader<?>> pluginLoaders = new HashMap<>();
 
         // Initialise the plugin language loaders.
-        for (final Map.Entry<PluginLanguageService<PluginResource>, List<PluginCandidate<PluginResource>>> candidate : platform.getCandidates().entrySet()) {
-            final PluginLanguageService<PluginResource> languageService = candidate.getKey();
+        for (final Map.Entry<PluginLanguageService, List<PluginCandidate>> candidate : platform.getCandidates().entrySet()) {
+            final PluginLanguageService languageService = candidate.getKey();
             final String loaderClass = languageService.pluginLoader();
             try {
                 pluginLoaders.put(languageService,
-                    (PluginLoader<PluginResource, PluginContainer>) Class.forName(loaderClass).getConstructor().newInstance());
+                    (PluginLoader<?>) Class.forName(loaderClass).getConstructor().newInstance());
             } catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
                            InvocationTargetException e) {
                 throw new RuntimeException(e);
@@ -95,15 +91,15 @@ public class FabricPluginManager implements SpongePluginManager {
         // Priority to platform plugins that will already exist here -- meaning the resolver will act upon them first
         // and if someone decides to give a plugin an ID that is the same as a platform plugin, the resolver will effectively
         // reject it.
-        final Set<PluginCandidate<PluginResource>> resources = new LinkedHashSet<>();
+        final Set<PluginCandidate> resources = new LinkedHashSet<>();
         pluginLanguageLookup.keySet().stream().filter(x -> this.plugins.containsKey(x.metadata().id())).forEach(resources::add);
         resources.addAll(pluginLanguageLookup.keySet());
 
-        final ResolutionResult<PluginResource> resolutionResult = DependencyResolver.resolveAndSortCandidates(resources, platform.logger());
-        final Map<PluginCandidate<PluginResource>, String> failedInstances = new HashMap<>();
-        final Map<PluginCandidate<PluginResource>, String> consequentialFailedInstances = new HashMap<>();
+        final ResolutionResult resolutionResult = DependencyResolver.resolveAndSortCandidates(resources, platform.logger());
+        final Map<PluginCandidate, String> failedInstances = new HashMap<>();
+        final Map<PluginCandidate, String> consequentialFailedInstances = new HashMap<>();
         final ClassLoader launchClassloader = Launch.instance().getClass().getClassLoader();
-        for (final PluginCandidate<PluginResource> candidate : resolutionResult.sortedSuccesses()) {
+        for (final PluginCandidate candidate : resolutionResult.sortedSuccesses()) {
             final PluginContainer plugin = this.plugins.get(candidate.metadata().id());
             if (plugin != null) {
                 if (plugin instanceof FabricDummyPluginContainer) {
@@ -134,8 +130,8 @@ public class FabricPluginManager implements SpongePluginManager {
             // If a dependency failed to load, then we should bail on required dependencies too.
             // This should work fine, we're sorted so all deps should be in place at this stage.
             if (this.stillValid(candidate, consequentialFailedInstances)) {
-                final PluginLanguageService<PluginResource> languageService = pluginLanguageLookup.get(candidate);
-                final PluginLoader<PluginResource, PluginContainer> pluginLoader = pluginLoaders.get(languageService);
+                final PluginLanguageService languageService = pluginLanguageLookup.get(candidate);
+                final PluginLoader<?> pluginLoader = pluginLoaders.get(languageService);
                 try {
                     final PluginContainer container = pluginLoader.loadPlugin(platform.getStandardEnvironment(), candidate, launchClassloader);
                     this.addPlugin(container);
@@ -160,16 +156,12 @@ public class FabricPluginManager implements SpongePluginManager {
         }
     }
 
-    public Map<String, Set<PluginResource>> locatedResources() {
-        return Collections.unmodifiableMap(this.locatedResources);
-    }
-
     @Nullable
     public PluginResource resource(final PluginContainer container) {
         return this.containerToResource.get(container);
     }
 
-    private boolean stillValid(final PluginCandidate<PluginResource> candidate, final Map<PluginCandidate<PluginResource>, String> consequential) {
+    private boolean stillValid(final PluginCandidate candidate, final Map<PluginCandidate, String> consequential) {
         final Optional<PluginDependency> failedId =
             candidate.metadata().dependencies().stream().filter(x -> !x.optional() && !this.plugins.containsKey(x.id())).findFirst();
         if (failedId.isPresent()) {
