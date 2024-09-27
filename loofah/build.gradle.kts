@@ -32,6 +32,7 @@ val minecraftVersion: String by project
 val parchmentBuild: String by project
 val fabricLoaderVersion: String by project
 val fabricApiVersion: String by project
+val secureModulesVersion: String by project
 val recommendedVersion: String by project
 val organization: String by project
 val projectUrl: String by project
@@ -195,6 +196,7 @@ dependencies {
     }
     fabricBootstrapLibrariesConfig(apiLibs.configurate.yaml)
     fabricBootstrapLibrariesConfig(apiLibs.guice)
+    fabricBootstrapLibrariesConfig("net.minecraftforge:securemodules:$secureModulesVersion")
     fabricLibrariesConfig("org.spongepowered:spongeapi:$apiVersion") { isTransitive = false }
     fabricLibrariesConfig(platform(apiLibs.adventure.bom))
     fabricLibrariesConfig(apiLibs.adventure.api)

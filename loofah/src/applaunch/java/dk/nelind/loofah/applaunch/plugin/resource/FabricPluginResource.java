@@ -24,57 +24,20 @@
  */
 package dk.nelind.loofah.applaunch.plugin.resource;
 
+import cpw.mods.jarhandling.SecureJar;
 import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 /** Adapted from {@link org.spongepowered.vanilla.applaunch.plugin.resource.SecureJarPluginResource} */
 public class FabricPluginResource implements JVMPluginResource {
     private final String locator;
-    private final Manifest manifest;
-    private final Path primaryPath;
-    private final Path resourcesRoot;
+    private final SecureJar jar;
 
-    // TODO(loofah): This whole thing is a mess. Implement to more properly fit SV behaviour.
-    //  Maybe bring in Secure Jar Handler https://github.com/McModLauncher/securejarhandler and just do as SV does?
     public FabricPluginResource(final String locator, final Path[] paths) {
         this.locator = locator;
-        this.primaryPath = paths[paths.length - 1];
-        this.resourcesRoot = Path.of("/");
-
-        if (Files.isDirectory(this.primaryPath)) {
-            var manifest = this.primaryPath.resolve(JarFile.MANIFEST_NAME);
-            if (Files.exists(manifest)) {
-                try (var inputStream = Files.newInputStream(manifest)) {
-                    this.manifest = new Manifest(inputStream);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                // if the directory has no manifest just use the default empty manifest
-                this.manifest = new Manifest();
-            }
-        } else {
-            try (var jar = new JarFile(primaryPath.toFile())) {
-                this.manifest = jar.getManifest();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    @Override
-    public Manifest manifest() {
-        return this.manifest;
-    }
-
-    @Override
-    public Path resourcesRoot() {
-        return this.resourcesRoot;
+        this.jar = SecureJar.from(paths);
     }
 
     @Override
@@ -84,6 +47,16 @@ public class FabricPluginResource implements JVMPluginResource {
 
     @Override
     public Path path() {
-        return this.primaryPath;
+        return this.jar.getPrimaryPath();
+    }
+
+    @Override
+    public Manifest manifest() {
+        return this.jar.moduleDataProvider().getManifest();
+    }
+
+    @Override
+    public Path resourcesRoot() {
+        return this.jar.getRootPath();
     }
 }
