@@ -26,7 +26,6 @@ package org.spongepowered.vanilla.applaunch.plugin.resource;
 
 import cpw.mods.jarhandling.JarMetadata;
 import cpw.mods.jarhandling.SecureJar;
-import org.spongepowered.common.applaunch.AppLaunch;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
 import org.spongepowered.vanilla.applaunch.plugin.ResourceType;
@@ -62,12 +61,6 @@ public final class SecureJarPluginResource implements JVMPluginResource {
             }
             return JarMetadata.from(jar, paths);
         }, paths);
-
-        AppLaunch.logger().info("locator is: {}", this.locator);
-        AppLaunch.logger().info("path is: {}", this.jar.getPrimaryPath());
-        AppLaunch.logger().info("resourceRoot is: {}", this.jar.getRootPath());
-        AppLaunch.logger().info("manifest is: {}", this.jar.moduleDataProvider().getManifest());
-        AppLaunch.logger().info("manifest attributes are: {}", this.manifest().getMainAttributes());
     }
 
     @Override
