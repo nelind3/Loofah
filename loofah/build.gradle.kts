@@ -186,6 +186,8 @@ dependencies {
 
     // API dependencies
     fabricBootstrapLibrariesConfig(apiLibs.pluginSpi) {
+        exclude("org.apache.commons", "commons-lang3")
+        exclude("org.apache.logging.log4j", "log4j-api")
         exclude("com.google.code.gson")
     }
     fabricBootstrapLibrariesConfig(platform(apiLibs.configurate.bom))
@@ -195,8 +197,13 @@ dependencies {
         exclude("com.google.code.gson")
     }
     fabricBootstrapLibrariesConfig(apiLibs.configurate.yaml)
-    fabricBootstrapLibrariesConfig(apiLibs.guice)
-    fabricBootstrapLibrariesConfig("net.minecraftforge:securemodules:$secureModulesVersion")
+    fabricBootstrapLibrariesConfig(apiLibs.guice) {
+        exclude("org.ow2.asm")
+        exclude("com.google.guava")
+    }
+    fabricBootstrapLibrariesConfig("net.minecraftforge:securemodules:$secureModulesVersion") {
+        exclude("org.ow2.asm")
+    }
     fabricLibrariesConfig("org.spongepowered:spongeapi:$apiVersion") { isTransitive = false }
     fabricLibrariesConfig(platform(apiLibs.adventure.bom))
     fabricLibrariesConfig(apiLibs.adventure.api)
@@ -208,10 +215,6 @@ dependencies {
     fabricLibrariesConfig(apiLibs.adventure.textSerializer.legacy)
     fabricLibrariesConfig(libs.adventure.serializerConfigurate4)
     fabricLibrariesConfig(apiLibs.math)
-    fabricLibrariesConfig(apiLibs.guice) {
-        exclude("org.ow2.asm")
-        exclude("com.google.guava")
-    }
 }
 
 tasks {
