@@ -24,20 +24,32 @@
  */
 package dk.nelind.loofah.applaunch.plugin.resource;
 
-import cpw.mods.jarhandling.SecureJar;
 import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-/** Adapted from {@link org.spongepowered.vanilla.applaunch.plugin.resource.SecureJarPluginResource} */
+// TODO(loofah): figure out what do to here. works fine for current needs but probably doesn't actually act up to spec
+//  (regarding unioned paths). Consider if there's something in fabric-loader itself we can hook into and use?
 public class FabricPluginResource implements JVMPluginResource {
     private final String locator;
-    private final SecureJar jar;
+    private final Path[] paths;
+    private final Manifest manifest;
 
     public FabricPluginResource(final String locator, final Path[] paths) {
         this.locator = locator;
-        this.jar = SecureJar.from(paths);
+        this.paths = paths;
+        this.manifest = new Manifest();
+        if (Files.exists(this.resourcesRoot().resolve(JarFile.MANIFEST_NAME))) {
+            try {
+                this.manifest.read(Files.newInputStream(this.resourcesRoot().resolve(JarFile.MANIFEST_NAME)));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override
@@ -47,16 +59,16 @@ public class FabricPluginResource implements JVMPluginResource {
 
     @Override
     public Path path() {
-        return this.jar.getPrimaryPath();
+        return this.paths[paths.length - 1];
     }
 
     @Override
     public Manifest manifest() {
-        return this.jar.moduleDataProvider().getManifest();
+        return this.manifest;
     }
 
     @Override
     public Path resourcesRoot() {
-        return this.jar.getRootPath();
+        return this.path();
     }
 }
