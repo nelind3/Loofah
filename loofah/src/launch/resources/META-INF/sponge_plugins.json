@@ -1,0 +1,55 @@
+{
+  "loader": {
+    "name": "java_plain",
+    "version": "1.0"
+  },
+  "license": "MIT",
+  "plugins": [
+    {
+      "id": "sponge",
+      "name": "Sponge",
+      "version": "${minecraftVersion}-${apiVersion}",
+      "entrypoint": "org.spongepowered.common.SpongeCommon",
+      "description": "The common Sponge implementation",
+      "links": {
+        "homepage": "https://www.spongepowered.org",
+        "source": "https://www.spongepowered.org/source",
+        "issues": "https://www.spongepowered.org/issues"
+      },
+      "contributors": [
+        {
+          "name": "SpongePowered",
+          "description": "Lead Developer"
+        }
+      ],
+      "dependencies": [
+        {
+          "id": "minecraft",
+          "version": "${minecraftVersion}"
+        },
+        {
+          "id": "spongeapi",
+          "version": "${apiVersion}"
+        }
+      ]
+    },
+    {
+      "id": "spongeapi",
+      "name": "SpongeAPI",
+      "version": "${apiVersion}",
+      "entrypoint": "org.spongepowered.api.Sponge",
+      "description": "The Minecraft API specification",
+      "links": {
+        "homepage": "https://www.spongepowered.org",
+        "source": "https://www.spongepowered.org/source",
+        "issues": "https://www.spongepowered.org/issues"
+      },
+      "contributors": [
+        {
+          "name": "SpongePowered",
+          "description": "Lead Developer"
+        }
+      ]
+    }
+  ]
+}

@@ -148,10 +148,12 @@ loom {
 
     runConfigs.configureEach {
         isIdeConfigGenerated = true
+        var envPlugins = fabricLaunch.output.joinToString("&")
         testPluginsProject?.also {
             val plugins: FileCollection = it.sourceSets.getByName("main").output
-            environmentVariable("SPONGE_PLUGINS", plugins.joinToString("&"))
+            envPlugins = envPlugins.plus(";").plus(plugins.joinToString("&"))
         }
+        environmentVariable("SPONGE_PLUGINS", envPlugins)
     }
 }
 
@@ -236,21 +238,24 @@ tasks {
             )
     }*/
 
-    processResources {
+    withType<ProcessResources> {
         //dependsOn(named("mergeAccessWideners"))
 
-        inputs.property("javaVersion", apiJavaTarget)
-        inputs.property("minecraftVersion", minecraftVersion)
-        inputs.property("fabricLoaderVersion", fabricLoaderVersion)
-        inputs.property("version", project.version)
+        val props = mapOf(
+            "javaVersion" to apiJavaTarget,
+            "minecraftVersion" to minecraftVersion,
+            "fabricLoaderVersion" to fabricLoaderVersion,
+            "apiVersion" to apiVersion,
+            "version" to project.version
+        )
+        props.forEach(inputs::property)
 
         filesMatching("fabric.mod.json") {
-            expand(
-                "javaVersion" to apiJavaTarget,
-                "minecraftVersion" to minecraftVersion,
-                "fabricLoaderVersion" to fabricLoaderVersion,
-                "version" to project.version
-            )
+            expand(props)
+        }
+
+        filesMatching("META-INF/sponge_plugins.json") {
+            expand(props)
         }
     }
 

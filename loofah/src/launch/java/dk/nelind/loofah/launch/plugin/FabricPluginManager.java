@@ -25,6 +25,7 @@
 package dk.nelind.loofah.launch.plugin;
 
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
+import dk.nelind.loofah.launch.plugin.modbacked.FabricModBackedPluginContainer;
 import dk.nelind.loofah.launch.plugin.resolver.DependencyResolver;
 import dk.nelind.loofah.launch.plugin.resolver.ResolutionResult;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -102,7 +103,7 @@ public class FabricPluginManager implements SpongePluginManager {
         for (final PluginCandidate candidate : resolutionResult.sortedSuccesses()) {
             final PluginContainer plugin = this.plugins.get(candidate.metadata().id());
             if (plugin != null) {
-                if (plugin instanceof FabricDummyPluginContainer) {
+                if (plugin instanceof FabricModBackedPluginContainer || plugin instanceof FabricDummyPluginContainer) {
                     continue;
                 }
                 // If we get here, we screwed up - duplicate IDs should have been detected earlier.
@@ -151,7 +152,7 @@ public class FabricPluginManager implements SpongePluginManager {
         this.plugins.put(plugin.metadata().id(), Objects.requireNonNull(plugin, "plugin"));
         this.sortedPlugins.add(plugin);
 
-        if (!(plugin instanceof FabricDummyPluginContainer)) {
+        if (!(plugin instanceof FabricModBackedPluginContainer)) {
             this.instancesToPlugins.put(plugin.instance(), plugin);
         }
     }

@@ -32,9 +32,12 @@ import com.google.inject.Stage;
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
 import dk.nelind.loofah.launch.inject.FabricModule;
 import dk.nelind.loofah.launch.mapping.FabricMappingManager;
+import dk.nelind.loofah.launch.plugin.FabricDummyPluginContainer;
 import dk.nelind.loofah.launch.plugin.FabricPluginManager;
+import dk.nelind.loofah.launch.plugin.modbacked.FabricModBackedPluginContainer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
 import org.spongepowered.common.SpongeCommon;
 import org.spongepowered.common.SpongeLifecycle;
@@ -43,10 +46,9 @@ import org.spongepowered.common.inject.SpongeCommonModule;
 import org.spongepowered.common.inject.SpongeGuice;
 import org.spongepowered.common.inject.SpongeModule;
 import org.spongepowered.common.launch.Launch;
-import org.spongepowered.common.launch.mapping.SpongeMappingManager;
-import org.spongepowered.common.launch.plugin.SpongePluginManager;
 import org.spongepowered.plugin.PluginContainer;
 
+import java.util.Collection;
 import java.util.List;
 
 public class FabricLaunch extends Launch {
@@ -80,11 +82,34 @@ public class FabricLaunch extends Launch {
         lifecycle.establishBuilders();
 
         this.logger().info("Loading Plugins");
-        this.pluginManager.loadPlugins((FabricPluginPlatform) this.pluginPlatform);
+        this.pluginManager.loadPlugins(this.pluginPlatform());
     }
 
     private void createPlatformPlugins() {
-        // TODO(loofah): create the platform plugins
+        final FabricLoader loader = FabricLoader.getInstance();
+        ModContainer minecraftMod = loader.getModContainer("minecraft")
+            .orElseThrow(() -> new IllegalStateException("Tried to get the Minecraft ModContainer, " +
+                "but it wasn't available. This should be impossible!!"));
+        ModContainer fabricLoaderMod = loader.getModContainer("fabricloader")
+            .orElseThrow(() -> new IllegalStateException("Tried to get the Fabric loader ModContainer, " +
+                "but it wasn't available. This should be impossible!!"));
+        ModContainer fabricApiMod = loader.getModContainer("fabric-api")
+            .orElseThrow(() -> new IllegalStateException("Tried to get the Fabric API ModContainer ," +
+                "but it wasn't available. This should be impossible!!"));
+        ModContainer loofahMod = loader.getModContainer("loofah")
+            .orElseThrow(() -> new IllegalStateException("Tried to get own ModContainer, " +
+                "but it wasn't available. This should be impossible!!"));
+
+        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(minecraftMod));
+        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(fabricLoaderMod));
+        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(fabricApiMod));
+        // Get SpongeCommon and SpongeAPI plugins from the mod jar
+        // since they can't be loom included for a variety of reasons
+        this.pluginPlatform().getCandidates().values().stream().flatMap(Collection::stream)
+            .filter(plugin -> List.of("spongeapi", "sponge").contains(plugin.metadata().id()))
+            .map(FabricDummyPluginContainer::of)
+            .forEach(this.pluginManager()::addPlugin);
+        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(loofahMod));
     }
 
     @Override
@@ -98,18 +123,24 @@ public class FabricLaunch extends Launch {
     }
 
     @Override
-    public SpongeMappingManager mappingManager() {
+    public FabricMappingManager mappingManager() {
         return this.mappingManager;
     }
 
     @Override
-    public SpongePluginManager pluginManager() {
-        return null;
+    public FabricPluginManager pluginManager() {
+        return this.pluginManager;
+    }
+
+    @Override
+    public FabricPluginPlatform pluginPlatform() {
+        return ((FabricPluginPlatform) this.pluginPlatform);
     }
 
     @Override
     public PluginContainer platformPlugin() {
-        return null;
+        return this.pluginManager.plugin("loofah").orElseThrow( () -> new IllegalStateException("Couldn't get the " +
+            "plugin representing Loofah this shouldn't be possible!"));
     }
 
     @Override

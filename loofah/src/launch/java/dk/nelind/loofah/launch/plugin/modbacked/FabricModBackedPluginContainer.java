@@ -22,24 +22,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.launch.plugin;
+package dk.nelind.loofah.launch.plugin.modbacked;
 
 import dk.nelind.loofah.launch.FabricLaunch;
+import net.fabricmc.loader.api.ModContainer;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.common.applaunch.plugin.DummyPluginContainer;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.builtin.StandardPluginContainer;
 
-public class FabricDummyPluginContainer extends StandardPluginContainer implements DummyPluginContainer {
-    public static FabricDummyPluginContainer of(PluginCandidate pluginCandidate) {
-        return new FabricDummyPluginContainer(
-            pluginCandidate,
+// TODO(loofah): consider making a mod backed plugin locator/language service/loader triplet
+public final class FabricModBackedPluginContainer extends StandardPluginContainer implements DummyPluginContainer {
+    public static FabricModBackedPluginContainer of(final ModContainer modContainer) {
+        return new FabricModBackedPluginContainer(
+            new FabricModBackedPluginCandidate(modContainer),
             FabricLaunch.instance().logger(),
-            FabricLaunch.instance()
+            modContainer
         );
     }
 
-    private FabricDummyPluginContainer(PluginCandidate candidate, Logger logger, Object instance) {
+    private FabricModBackedPluginContainer(final PluginCandidate candidate, final Logger logger, final Object instance) {
         super(candidate, logger);
         this.initializeInstance(instance);
     }
