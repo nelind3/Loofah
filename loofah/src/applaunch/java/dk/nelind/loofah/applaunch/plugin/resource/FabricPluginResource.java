@@ -24,11 +24,15 @@
  */
 package dk.nelind.loofah.applaunch.plugin.resource;
 
+import net.fabricmc.loader.impl.launch.FabricLauncherBase;
+import net.fabricmc.loader.impl.util.FileSystemUtil;
 import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
@@ -36,20 +40,56 @@ import java.util.jar.Manifest;
 //  (regarding unioned paths). Consider if there's something in fabric-loader itself we can hook into and use?
 public class FabricPluginResource implements JVMPluginResource {
     private final String locator;
-    private final Path[] paths;
+    private final List<Path> paths;
     private final Manifest manifest;
 
     public FabricPluginResource(final String locator, final Path[] paths) {
         this.locator = locator;
-        this.paths = paths;
-        this.manifest = new Manifest();
-        if (Files.exists(this.resourcesRoot().resolve(JarFile.MANIFEST_NAME))) {
-            try {
-                this.manifest.read(Files.newInputStream(this.resourcesRoot().resolve(JarFile.MANIFEST_NAME)));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try {
+            this.paths = FabricPluginResource.processPaths(paths);
+            this.manifest = FabricPluginResource.getManifest(this.paths);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static List<Path> processPaths(Path[] paths) throws IOException {
+        var processedPaths = new ArrayList<Path>();
+
+        for (Path path : paths) {
+            if (Files.isDirectory(path)) {
+                FabricLauncherBase.getLauncher().addToClassPath(path);
+                processedPaths.add(path);
+                continue;
+            }
+
+            if (path.toString().endsWith(".jar")) {
+                var fs = FileSystemUtil.getJarFileSystem(path, false);
+                var jarPath = fs.get().getRootDirectories().iterator().next();
+                FabricLauncherBase.getLauncher().addToClassPath(jarPath);
+                processedPaths.add(jarPath);
+                continue;
+            }
+
+            throw new IllegalStateException(String.format("Resource path \"%s\" of unknown type given!" +
+                "Plugins can only be provided in jar or directory form!", path));
+        }
+
+        return processedPaths;
+    }
+
+    public static Manifest getManifest(List<Path> paths) throws IOException {
+        var manifest = new Manifest();
+
+        for (Path path : paths) {
+            var manifestPath = path.resolve(JarFile.MANIFEST_NAME);
+            if (Files.exists(manifestPath)) {
+                manifest.read(Files.newInputStream(manifestPath));
+                break;
             }
         }
+
+        return manifest;
     }
 
     @Override
@@ -59,7 +99,7 @@ public class FabricPluginResource implements JVMPluginResource {
 
     @Override
     public Path path() {
-        return this.paths[paths.length - 1];
+        return this.paths.getLast();
     }
 
     @Override

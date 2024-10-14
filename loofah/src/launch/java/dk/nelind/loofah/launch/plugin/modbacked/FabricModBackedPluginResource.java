@@ -22,25 +22,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.applaunch.plugin;
+package dk.nelind.loofah.launch.plugin.modbacked;
 
-import org.spongepowered.plugin.builtin.StandardPluginLanguageService;
+import dk.nelind.loofah.applaunch.plugin.resource.FabricPluginResource;
+import net.fabricmc.loader.api.ModContainer;
+import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
 
-/**
- * Adapted from {@link org.spongepowered.vanilla.applaunch.plugin.JavaPluginLanguageService}
- */
-public final class JavaPluginLanguageService extends StandardPluginLanguageService {
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.jar.Manifest;
 
-    private final static String NAME = "java_plain";
+public class FabricModBackedPluginResource implements JVMPluginResource {
+    private final ModContainer mod;
+    private final Manifest manifest;
 
-    @Override
-    public String name() {
-        return JavaPluginLanguageService.NAME;
+    public FabricModBackedPluginResource(ModContainer mod) {
+        this.mod = mod;
+        try {
+            // TODO(loofah): idk this feels weird but i don't see an immediate need to pull this out into a
+            //  util class so in FabricPluginResource it shall stay
+            this.manifest = FabricPluginResource.getManifest(mod.getRootPaths());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public String pluginLoader() {
-        // hard coded string to avoid circular gradle task dependency hell
-        return "dk.nelind.loofah.launch.plugin.JavaPluginLoader";
+    public Manifest manifest() {
+        return this.manifest;
+    }
+
+    @Override
+    public Path resourcesRoot() {
+        return this.mod.getRootPaths().getLast();
+    }
+
+    @Override
+    public String locator() {
+        return "fabric_loader";
+    }
+
+    @Override
+    public Path path() {
+        return this.mod.getOrigin().getPaths().getLast();
     }
 }

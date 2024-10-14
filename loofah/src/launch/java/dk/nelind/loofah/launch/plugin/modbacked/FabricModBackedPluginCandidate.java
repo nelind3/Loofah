@@ -24,7 +24,6 @@
  */
 package dk.nelind.loofah.launch.plugin.modbacked;
 
-import dk.nelind.loofah.applaunch.plugin.resource.FabricPluginResource;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.spongepowered.plugin.PluginCandidate;
@@ -33,18 +32,13 @@ import org.spongepowered.plugin.metadata.PluginMetadata;
 import org.spongepowered.plugin.metadata.builtin.StandardPluginMetadata;
 import org.spongepowered.plugin.metadata.builtin.model.StandardPluginContributor;
 
-import java.nio.file.Path;
-
 // TODO(loofah): consider making a mod backed plugin locator/language service/loader triplet
 public class FabricModBackedPluginCandidate implements PluginCandidate {
     private final PluginMetadata pluginMetadata;
-    private final FabricPluginResource pluginResource;
+    private final PluginResource pluginResource;
 
     public FabricModBackedPluginCandidate(final ModContainer modContainer) {
-        this.pluginResource = new FabricPluginResource(
-            "fabric_loader",
-            modContainer.getOrigin().getPaths().toArray(new Path[0])
-        );
+        this.pluginResource = new FabricModBackedPluginResource(modContainer);
         this.pluginMetadata = FabricModBackedPluginCandidate.pluginMetadataFromMod(modContainer.getMetadata());
     }
 

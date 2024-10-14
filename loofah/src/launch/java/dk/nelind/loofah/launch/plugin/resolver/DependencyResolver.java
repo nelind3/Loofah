@@ -43,6 +43,8 @@ public final class DependencyResolver {
             final Logger logger) {
         final Map<String, Node> nodes = new HashMap<>();
         final ResolutionResult resolutionResult = new ResolutionResult();
+        // TODO(loofah): since sponge and spongeapi are loaded as candidates but the rest of the platform plugins
+        //  aren't the sponge plugin throws a missing dep error for minecraft
         for (final PluginCandidate candidate : candidates) {
             final String id = candidate.metadata().id();
             // If we already have an entry, this is now a duplicate ID situation.

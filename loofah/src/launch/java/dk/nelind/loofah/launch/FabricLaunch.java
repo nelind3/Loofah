@@ -54,6 +54,14 @@ import java.util.List;
 public class FabricLaunch extends Launch {
     private final FabricMappingManager mappingManager;
     private final FabricPluginManager pluginManager;
+    public static final List<String> PLATFORM_PLUGINS = List.of(
+        "minecraft",
+        "fabricloader",
+        "fabric-api",
+        "spongeapi",
+        "sponge",
+        "loofah"
+    );
 
     public FabricLaunch(PluginPlatform pluginPlatform) {
         super(pluginPlatform);
@@ -65,6 +73,7 @@ public class FabricLaunch extends Launch {
         FabricLaunch launch = new FabricLaunch(pluginPlatform);
         Launch.setInstance(launch);
         launch.bootstrap();
+        launch.loadPlugins();
     }
 
     private void bootstrap() {
@@ -80,8 +89,9 @@ public class FabricLaunch extends Launch {
         this.setLifecycle(lifecycle);
         lifecycle.establishFactories();
         lifecycle.establishBuilders();
+    }
 
-        this.logger().info("Loading Plugins");
+    private void loadPlugins() {
         this.pluginManager.loadPlugins(this.pluginPlatform());
     }
 
@@ -106,7 +116,7 @@ public class FabricLaunch extends Launch {
         // Get SpongeCommon and SpongeAPI plugins from the mod jar
         // since they can't be loom included for a variety of reasons
         this.pluginPlatform().getCandidates().values().stream().flatMap(Collection::stream)
-            .filter(plugin -> List.of("spongeapi", "sponge").contains(plugin.metadata().id()))
+            .filter(plugin -> PLATFORM_PLUGINS.contains(plugin.metadata().id()))
             .map(FabricDummyPluginContainer::of)
             .forEach(this.pluginManager()::addPlugin);
         this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(loofahMod));
