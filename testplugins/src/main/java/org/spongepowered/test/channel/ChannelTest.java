@@ -67,6 +67,19 @@ public final class ChannelTest {
         private RawDataChannel rawChannel;
 
         @Listener
+        private void onConnectionIntent(final ServerSideConnectionEvent.Intent event) {
+            ChannelTest.this.plugin.logger().info("Starting intent phase.");
+
+            final ServerSideConnection connection = event.connection();
+            this.rawChannel.handshake().sendTo(connection, buf -> buf.writeVarInt(3))
+                .thenAccept(response -> this.logReceived(this.rawChannel, response.readVarInt(), connection))
+                .exceptionally(cause -> {
+                    ChannelTest.this.plugin.logger().error("Failed to get a response to raw 3 value", cause);
+                    return null;
+                });
+        }
+
+        @Listener
         private void onRegisterChannel(final RegisterChannelEvent event) {
             this.channel = event.register(ResourceKey.of("channeltest", "default"), PacketChannel.class);
             this.channel.register(PrintTextPacket.class, 0)
@@ -171,6 +184,20 @@ public final class ChannelTest {
                         }
                         return null;
                     });
+        }
+
+        @Listener
+        private void onConnectionConfiguration(final ServerSideConnectionEvent.Configuration event) {
+            ChannelTest.this.plugin.logger().info("Starting configuration phase.");
+
+            final ServerSideConnection connection = event.connection();
+            final PingPacket pingPacket1 = new PingPacket(333);
+            this.channel.sendTo(connection, pingPacket1)
+                .thenAccept(response1 -> this.logReceived(this.channel, response1, connection))
+                .exceptionally(cause -> {
+                    ChannelTest.this.plugin.logger().error("Failed to get a response to {}", pingPacket1, cause);
+                    return null;
+                });
         }
 
         @Listener
