@@ -203,7 +203,7 @@ dependencies {
         exclude("org.ow2.asm")
         exclude("com.google.guava")
     }
-    fabricLibrariesConfig("org.spongepowered:spongeapi:$apiVersion") { isTransitive = false }
+    fabricLibrariesConfig("org.spongepowered:spongeapi:$apiVersion")
     fabricLibrariesConfig(platform(apiLibs.adventure.bom))
     fabricLibrariesConfig(apiLibs.adventure.api)
     fabricLibrariesConfig(apiLibs.adventure.minimessage)
