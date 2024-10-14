@@ -22,21 +22,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.launch.inject;
+package dk.nelind.loofah.launch;
 
-import com.google.inject.AbstractModule;
-import dk.nelind.loofah.launch.FabricPlatform;
-import dk.nelind.loofah.launch.command.FabricCommandManager;
-import dk.nelind.loofah.launch.event.FabricEventManager;
-import org.spongepowered.api.Platform;
-import org.spongepowered.api.event.EventManager;
-import org.spongepowered.common.command.manager.SpongeCommandManager;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import org.spongepowered.api.MinecraftVersion;
+import org.spongepowered.common.SpongePlatform;
 
-public class FabricModule  extends AbstractModule {
+import java.util.Map;
+
+/** Copied from {@link org.spongepowered.vanilla.launch.VanillaPlatform} */
+@Singleton
+public class FabricPlatform extends SpongePlatform {
+    @Inject
+    protected FabricPlatform(MinecraftVersion minecraftVersion) {
+        super(minecraftVersion);
+
+        this.createPlatformMetadata();
+    }
+
     @Override
-    protected void configure() {
-        this.bind(Platform.class).to(FabricPlatform.class);
-        this.bind(EventManager.class).to(FabricEventManager.class);
-        this.bind(SpongeCommandManager.class).to(FabricCommandManager.class);
+    public Map<String, Object> asMap() {
+        return this.platformMap;
     }
 }

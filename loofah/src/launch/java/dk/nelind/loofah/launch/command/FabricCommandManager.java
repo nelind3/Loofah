@@ -22,21 +22,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.launch.inject;
+package dk.nelind.loofah.launch.command;
 
-import com.google.inject.AbstractModule;
-import dk.nelind.loofah.launch.FabricPlatform;
-import dk.nelind.loofah.launch.command.FabricCommandManager;
-import dk.nelind.loofah.launch.event.FabricEventManager;
-import org.spongepowered.api.Platform;
-import org.spongepowered.api.event.EventManager;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import org.spongepowered.api.Game;
+import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.command.CommandResult;
+import org.spongepowered.api.command.exception.CommandException;
+import org.spongepowered.api.command.manager.CommandMapping;
 import org.spongepowered.common.command.manager.SpongeCommandManager;
+import org.spongepowered.common.command.sponge.SpongeCommand;
 
-public class FabricModule  extends AbstractModule {
+/** Copied from {@link org.spongepowered.vanilla.launch.command.VanillaCommandManager} */
+public class FabricCommandManager extends SpongeCommandManager {
+    @Inject
+    public FabricCommandManager(final Game game, final Provider<SpongeCommand> spongeCommand) {
+        super(game, spongeCommand);
+    }
+
     @Override
-    protected void configure() {
-        this.bind(Platform.class).to(FabricPlatform.class);
-        this.bind(EventManager.class).to(FabricEventManager.class);
-        this.bind(SpongeCommandManager.class).to(FabricCommandManager.class);
+    public CommandResult processCommand(
+        final CommandCause cause,
+        final CommandMapping mapping,
+        final String command,
+        final String args
+    ) throws CommandException {
+        return mapping.registrar().process(cause, mapping, command, args);
     }
 }

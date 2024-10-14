@@ -22,21 +22,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.launch.inject;
+package dk.nelind.loofah.launch.event;
 
-import com.google.inject.AbstractModule;
-import dk.nelind.loofah.launch.FabricPlatform;
-import dk.nelind.loofah.launch.command.FabricCommandManager;
-import dk.nelind.loofah.launch.event.FabricEventManager;
-import org.spongepowered.api.Platform;
-import org.spongepowered.api.event.EventManager;
-import org.spongepowered.common.command.manager.SpongeCommandManager;
+import com.google.inject.Singleton;
+import org.spongepowered.common.event.manager.SpongeEventManager;
 
-public class FabricModule  extends AbstractModule {
-    @Override
-    protected void configure() {
-        this.bind(Platform.class).to(FabricPlatform.class);
-        this.bind(EventManager.class).to(FabricEventManager.class);
-        this.bind(SpongeCommandManager.class).to(FabricCommandManager.class);
-    }
+// TODO(loofah): figure out the event situation.
+//  how much and what kind of event sync between loofah/sponge and fapi are we going to do?
+/** Copied from {@link org.spongepowered.vanilla.launch.event.VanillaEventManager} */
+@Singleton
+public class FabricEventManager extends SpongeEventManager {
+
 }
