@@ -24,19 +24,23 @@
  */
 package dk.nelind.loofah.launch.plugin;
 
+import com.google.inject.Injector;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.common.launch.plugin.SpongePluginContainer;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.builtin.StandardPluginContainer;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Adapted from {@link org.spongepowered.vanilla.launch.plugin.VanillaJavaPluginContainer}
  */
-public class FabricJavaPluginContainer extends StandardPluginContainer {
+public class FabricJavaPluginContainer extends StandardPluginContainer implements SpongePluginContainer {
 
     private MethodHandles.Lookup lookup;
+    private Injector injector;
 
     public FabricJavaPluginContainer(PluginCandidate candidate) {
         super(candidate);
@@ -59,5 +63,14 @@ public class FabricJavaPluginContainer extends StandardPluginContainer {
                 this.metadata().id()));
         }
         this.lookup = Objects.requireNonNull(lookup);
+    }
+
+    @Override
+    public Optional<Injector> injector() {
+        return Optional.ofNullable(this.injector);
+    }
+
+    public void setInjector(final Injector injector) {
+        this.injector = injector;
     }
 }

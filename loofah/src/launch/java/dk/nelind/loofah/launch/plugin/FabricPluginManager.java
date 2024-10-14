@@ -47,6 +47,7 @@ public class FabricPluginManager implements SpongePluginManager {
     private final Map<Object, PluginContainer> instancesToPlugins;
     private final List<PluginContainer> sortedPlugins;
     private final Map<PluginContainer, PluginResource> containerToResource;
+    private boolean ready = false;
 
     public FabricPluginManager() {
         this.plugins = new Object2ObjectOpenHashMap<>();
@@ -82,7 +83,8 @@ public class FabricPluginManager implements SpongePluginManager {
             try {
                 pluginLoaders.put(languageService,
                     (PluginLoader<?>) Class.forName(loaderClass).getConstructor().newInstance());
-            } catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
+            } catch (final InstantiationException | IllegalAccessException | ClassNotFoundException |
+                           NoSuchMethodException |
                            InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
@@ -146,6 +148,8 @@ public class FabricPluginManager implements SpongePluginManager {
 
         resolutionResult.printErrorsIfAny(failedInstances, consequentialFailedInstances, platform.logger());
         platform.logger().info("Loaded plugin(s): {}", this.sortedPlugins.stream().map(p -> p.metadata().id()).collect(Collectors.toList()));
+
+        this.ready = true;
     }
 
     public void addPlugin(final PluginContainer plugin) {
@@ -170,5 +174,10 @@ public class FabricPluginManager implements SpongePluginManager {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public boolean isReady() {
+        return this.ready;
     }
 }

@@ -27,27 +27,22 @@ package dk.nelind.loofah.launch.plugin;
 import com.google.inject.Injector;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.spongepowered.common.inject.plugin.PluginModule;
+import org.spongepowered.common.inject.plugin.PluginGuice;
 import org.spongepowered.common.launch.Launch;
 import org.spongepowered.plugin.Environment;
 import org.spongepowered.plugin.InvalidPluginException;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.PluginLoader;
 
-import java.lang.invoke.MethodHandles;
-
 /**
  * Adapted from {@link org.spongepowered.vanilla.launch.plugin.JavaPluginLoader}
  */
 public class JavaPluginLoader implements PluginLoader<FabricJavaPluginContainer> {
-
-    private final ArtifactVersion version = new DefaultArtifactVersion("1.0");
-
-    private static final MethodHandles.Lookup SPONGE_LOOKUP = MethodHandles.lookup();
+    private static final ArtifactVersion VERSION = new DefaultArtifactVersion("1.0");
 
     @Override
     public ArtifactVersion version() {
-        return this.version;
+        return JavaPluginLoader.VERSION;
     }
 
     @Override
@@ -58,23 +53,20 @@ public class JavaPluginLoader implements PluginLoader<FabricJavaPluginContainer>
     ) throws InvalidPluginException {
         final FabricJavaPluginContainer container = new FabricJavaPluginContainer(candidate);
         try {
-            final String pluginClassName = container.metadata().entrypoint();
-            final Class<?> pluginClass = Class.forName(pluginClassName, true, targetClassLoader);
-            container.initializeLookup(MethodHandles.privateLookupIn(pluginClass, JavaPluginLoader.SPONGE_LOOKUP));
+            final String mainClass = container.metadata().entrypoint();
+            final Class<?> pluginClass = Class.forName(mainClass, true, targetClassLoader);
 
-            final Injector parentInjector = Launch.instance().lifecycle().platformInjector();
-            final Object plugin;
-            if (parentInjector != null) {
-                final Injector childInjector = parentInjector.createChildInjector(new PluginModule(container, pluginClass));
-                plugin = childInjector.getInstance(pluginClass);
-            } else {
-                plugin = pluginClass.getConstructor().newInstance();
-            }
+            final Injector pluginInjector = PluginGuice.create(
+                container,
+                pluginClass,
+                Launch.instance().lifecycle().platformInjector()
+            );
+            final Object plugin = pluginInjector.getInstance(pluginClass);
+            container.setInjector(pluginInjector);
             container.initializeInstance(plugin);
             return container;
         } catch (final Exception ex) {
             throw new InvalidPluginException("An error occurred creating an instance of plugin '" + container.metadata().id() + "'!", ex);
         }
     }
-
 }

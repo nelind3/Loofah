@@ -31,7 +31,6 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
 import dk.nelind.loofah.launch.inject.FabricModule;
-import dk.nelind.loofah.launch.mapping.FabricMappingManager;
 import dk.nelind.loofah.launch.plugin.FabricDummyPluginContainer;
 import dk.nelind.loofah.launch.plugin.FabricPluginManager;
 import dk.nelind.loofah.launch.plugin.modbacked.FabricModBackedPluginContainer;
@@ -52,7 +51,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class FabricLaunch extends Launch {
-    private final FabricMappingManager mappingManager;
     private final FabricPluginManager pluginManager;
     public static final List<String> PLATFORM_PLUGINS = List.of(
         "minecraft",
@@ -65,7 +63,6 @@ public class FabricLaunch extends Launch {
 
     public FabricLaunch(PluginPlatform pluginPlatform) {
         super(pluginPlatform);
-        this.mappingManager = new FabricMappingManager();
         this.pluginManager = new FabricPluginManager();
     }
 
@@ -130,11 +127,6 @@ public class FabricLaunch extends Launch {
     @Override
     public boolean dedicatedServer() {
         return FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER;
-    }
-
-    @Override
-    public FabricMappingManager mappingManager() {
-        return this.mappingManager;
     }
 
     @Override
