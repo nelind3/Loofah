@@ -24,13 +24,17 @@
  */
 package dk.nelind.loofah.launch.plugin;
 
+import com.google.inject.Injector;
 import dk.nelind.loofah.launch.FabricLaunch;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.common.applaunch.plugin.DummyPluginContainer;
+import org.spongepowered.common.launch.plugin.SpongePluginContainer;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.builtin.StandardPluginContainer;
 
-public class FabricDummyPluginContainer extends StandardPluginContainer implements DummyPluginContainer {
+import java.util.Optional;
+
+public class FabricDummyPluginContainer extends StandardPluginContainer implements SpongePluginContainer, DummyPluginContainer {
     public static FabricDummyPluginContainer of(PluginCandidate pluginCandidate) {
         return new FabricDummyPluginContainer(
             pluginCandidate,
@@ -42,5 +46,10 @@ public class FabricDummyPluginContainer extends StandardPluginContainer implemen
     private FabricDummyPluginContainer(PluginCandidate candidate, Logger logger, Object instance) {
         super(candidate, logger);
         this.initializeInstance(instance);
+    }
+
+    @Override
+    public Optional<Injector> injector() {
+        return Optional.empty();
     }
 }
