@@ -24,25 +24,41 @@
  */
 package dk.nelind.loofah.launch.plugin;
 
+import com.google.inject.Singleton;
 import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
-import dk.nelind.loofah.launch.plugin.modbacked.FabricModBackedPluginContainer;
 import dk.nelind.loofah.launch.plugin.resolver.DependencyResolver;
 import dk.nelind.loofah.launch.plugin.resolver.ResolutionResult;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.logging.log4j.Level;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.common.applaunch.plugin.DummyPluginContainer;
 import org.spongepowered.common.launch.Launch;
 import org.spongepowered.common.launch.plugin.SpongePluginManager;
 import org.spongepowered.common.util.PrettyPrinter;
-import org.spongepowered.plugin.*;
+import org.spongepowered.plugin.InvalidPluginException;
+import org.spongepowered.plugin.PluginCandidate;
+import org.spongepowered.plugin.PluginContainer;
+import org.spongepowered.plugin.PluginLanguageService;
+import org.spongepowered.plugin.PluginLoader;
+import org.spongepowered.plugin.PluginResource;
 import org.spongepowered.plugin.metadata.model.PluginDependency;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Adapted from {@link org.spongepowered.vanilla.launch.plugin.VanillaPluginManager} */
-public class FabricPluginManager implements SpongePluginManager {
+@Singleton
+public final class FabricPluginManager implements SpongePluginManager {
     private final Map<String, PluginContainer> plugins;
     private final Map<Object, PluginContainer> instancesToPlugins;
     private final List<PluginContainer> sortedPlugins;
@@ -71,7 +87,6 @@ public class FabricPluginManager implements SpongePluginManager {
         return Collections.unmodifiableCollection(this.sortedPlugins);
     }
 
-    @SuppressWarnings("unchecked")
     public void loadPlugins(final FabricPluginPlatform platform) {
         final Map<PluginCandidate, PluginLanguageService> pluginLanguageLookup = new HashMap<>();
         final Map<PluginLanguageService, PluginLoader<?>> pluginLoaders = new HashMap<>();
@@ -81,11 +96,8 @@ public class FabricPluginManager implements SpongePluginManager {
             final PluginLanguageService languageService = candidate.getKey();
             final String loaderClass = languageService.pluginLoader();
             try {
-                pluginLoaders.put(languageService,
-                    (PluginLoader<?>) Class.forName(loaderClass).getConstructor().newInstance());
-            } catch (final InstantiationException | IllegalAccessException | ClassNotFoundException |
-                           NoSuchMethodException |
-                           InvocationTargetException e) {
+                pluginLoaders.put(languageService, (PluginLoader<?>) Class.forName(loaderClass).getConstructor().newInstance());
+            } catch (final InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
             candidate.getValue().forEach(x -> pluginLanguageLookup.put(x, languageService));
@@ -103,9 +115,15 @@ public class FabricPluginManager implements SpongePluginManager {
         final Map<PluginCandidate, String> consequentialFailedInstances = new HashMap<>();
         final ClassLoader launchClassloader = Launch.instance().getClass().getClassLoader();
         for (final PluginCandidate candidate : resolutionResult.sortedSuccesses()) {
-            final PluginContainer plugin = this.plugins.get(candidate.metadata().id());
+            final String id = candidate.metadata().id();
+            if (id.indexOf('-') >= 0) {
+                platform.logger().warn("The dash character (-) is no longer supported in plugin ids.\n" +
+                    "Plugin {} is still using it. If you are the developer of this plugin, please change the id.", id);
+            }
+
+            final PluginContainer plugin = this.plugins.get(id);
             if (plugin != null) {
-                if (plugin instanceof FabricModBackedPluginContainer || plugin instanceof FabricDummyPluginContainer) {
+                if (plugin instanceof DummyPluginContainer) {
                     continue;
                 }
                 // If we get here, we screwed up - duplicate IDs should have been detected earlier.
@@ -118,8 +136,7 @@ public class FabricPluginManager implements SpongePluginManager {
                     .hr()
                     .addWrapped("Loofah attempted to create a second plugin with ID '%s'. This is not allowed - all plugins must have a unique "
                             + "ID. Usually, Loofah will catch this earlier -- but in this case Loofah has validated two plugins with "
-                            + "the same ID. Please report this error to Loofah devs.",
-                        candidate.metadata().id())
+                            + "the same ID. Please report this error to Loofah devs.", id)
                     .add()
                     .add("Technical Details:")
                     .add("Plugins to load:", 4);
@@ -141,7 +158,7 @@ public class FabricPluginManager implements SpongePluginManager {
                     this.containerToResource.put(container, candidate.resource());
                 } catch (final InvalidPluginException e) {
                     failedInstances.put(candidate, "Failed to construct: see stacktrace(s) above this message for details.");
-                    platform.logger().error("Failed to construct plugin {}", candidate.metadata().id(), e);
+                    platform.logger().error("Failed to construct plugin {}", id, e);
                 }
             }
         }
@@ -156,7 +173,7 @@ public class FabricPluginManager implements SpongePluginManager {
         this.plugins.put(plugin.metadata().id(), Objects.requireNonNull(plugin, "plugin"));
         this.sortedPlugins.add(plugin);
 
-        if (!(plugin instanceof FabricModBackedPluginContainer)) {
+        if (!(plugin instanceof DummyPluginContainer)) {
             this.instancesToPlugins.put(plugin.instance(), plugin);
         }
     }
