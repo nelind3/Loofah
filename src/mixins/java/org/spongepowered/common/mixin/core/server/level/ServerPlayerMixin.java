@@ -29,20 +29,16 @@ import com.mojang.datafixers.util.Either;
 import io.netty.channel.Channel;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
-import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.ChatType;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.OutgoingChatMessage;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundChangeDifficultyPacket;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ClientboundRespawnPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityLinkPacket;
 import net.minecraft.resources.ResourceKey;
@@ -75,8 +71,6 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Team;
-import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.adventure.Audiences;
@@ -114,6 +108,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -591,7 +586,10 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
         return transition;
     }
 
-    @Redirect(
+    // FIXME(loofah): this conflicts with FAPI and also seems to just be the native behaviour
+    //  but without sending the close packet to the client. this seems wrong so for now we disable it.
+    //  consider upstreaming if its not necessary?
+    /*@Redirect(
             method = {"openMenu", "openHorseInventory"},
             at = @At(
                     value = "INVOKE",
@@ -600,18 +598,16 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
     )
     private void impl$closePreviousContainer(final net.minecraft.server.level.ServerPlayer self) {
         this.shadow$doCloseContainer();
-    }
+    }*/
 
-    // TODO(loofah): This conflicts with Fabric API (God i hate overwrites sometimes). Replace with loofah specific
-    //  patch that uses injects and redirects instead.
-    //  (Test if reason for overwrite is still true. If not consider upstreaming)
+    /// Upstream Start
     /**
      * @author blood - May 12th, 2016
      * @author gabizou - June 3rd, 2016
      * @author gabizou - February 22nd, 2020 - Minecraft 1.14.3
      * @reason SpongeForge requires an overwrite so we do it here instead. This handles player death events.
      */
-    @Overwrite
+    /*@Overwrite
     public void die(final DamageSource cause) {
         // Sponge start - Call Destruct Death Event
         final DestructEntityEvent.Death event = SpongeCommonEventFactory.callDestructEntityEventDeath((net.minecraft.server.level.ServerPlayer) (Object) this, cause,
@@ -686,7 +682,54 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
         this.shadow$clearFire();
         this.shadow$setSharedFlag(0, false);
         this.shadow$getCombatTracker().recheckStatus();
+    }*/
+    // Upstream End
+
+    // Loofah Start
+    // FIXME(loofah): if SpongeCommon and SpongeVanilla go through with adding MixinExtras this should be a @Share instead
+    @Unique private DestructEntityEvent.Death impl$PlayerDeathEvent;
+
+    @Inject(
+        method = "die",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void impl$callDestructEventDeath(DamageSource cause, CallbackInfo ci) {
+        this.impl$PlayerDeathEvent = SpongeCommonEventFactory.callDestructEntityEventDeath(
+            (net.minecraft.server.level.ServerPlayer) (Object) this,
+            cause,
+            Audiences.server()
+        );
+        if (this.impl$PlayerDeathEvent.isCancelled()) {
+            ci.cancel();
+        }
     }
+
+    @Redirect(
+        method = "die",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/players/PlayerList;broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Z)V"
+        )
+    )
+    private void impl$sendSpongeDeathMessage(PlayerList instance, net.minecraft.network.chat.Component $$0, boolean $$1) {
+        final Component message = this.impl$PlayerDeathEvent.message();
+        if (message != Component.empty()) {
+            this.impl$PlayerDeathEvent.audience().ifPresent(eventChannel -> eventChannel.sendMessage(Identity.nil(), message));
+        }
+    }
+
+    @Inject(
+        method = "die",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/level/ServerPlayer;isSpectator()Z"
+        )
+    )
+    private void impl$setKeepInventoryFromDeathEvent(DamageSource cause, CallbackInfo ci) {
+        this.impl$keepInventory = this.impl$PlayerDeathEvent.keepInventory();
+    }
+    // Loofah End
 
     @Redirect(method = "restoreFrom(Lnet/minecraft/server/level/ServerPlayer;Z)V",
             at = @At(value = "INVOKE",
