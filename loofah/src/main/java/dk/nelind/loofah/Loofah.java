@@ -22,18 +22,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.main;
+package dk.nelind.loofah;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.server.IntegratedServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Client;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.common.applaunch.config.core.ConfigHandle;
+import org.spongepowered.common.bridge.client.MinecraftBridge;
 import org.spongepowered.common.launch.Launch;
 import org.spongepowered.common.launch.Lifecycle;
 import org.spongepowered.common.network.channel.SpongeChannelManager;
@@ -76,6 +80,15 @@ public class Loofah implements ModInitializer, ClientModInitializer {
         final Lifecycle lifecycle = Launch.instance().lifecycle();
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            // Adatped from org.spongepowered.vanilla.mixin.core.client.server.IntegratedServerMixin_Vanilla
+            // Occasional race condition can occur where the server thread is running
+            // before the field is set on the client thread requires a quassi set
+            if (FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT)) {
+                if (!Sponge.isServerAvailable()) {
+                    ((MinecraftBridge) Minecraft.getInstance()).bridge$setTemporaryIntegratedServer((IntegratedServer) server);
+                }
+            }
+
             // Save config now that registries have been initialized
             ConfigHandle.setSaveSuppressed(false);
 
@@ -89,6 +102,13 @@ public class Loofah implements ModInitializer, ClientModInitializer {
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             lifecycle.callStartedEngineEvent((Server) server);
             lifecycle.callLoadedGameEvent();
+
+            // Adatped from org.spongepowered.vanilla.mixin.core.client.server.IntegratedServerMixin_Vanilla
+            if (FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT)) {
+                if (((MinecraftBridge) Minecraft.getInstance()).bridge$getTemporaryIntegratedServer() != null) {
+                    ((MinecraftBridge) Minecraft.getInstance()).bridge$setTemporaryIntegratedServer(null);
+                }
+            }
         });
 
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {

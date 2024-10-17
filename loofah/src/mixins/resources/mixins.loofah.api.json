@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "dk.nelind.loofah.mixin.api",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "minecraft.client.MinecraftMixin_Fabric_API"
+  ],
+  "mixins": [
+    "minecraft.server.MinecraftServerMixin_Fabric_API"
+  ]
+}

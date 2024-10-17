@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "dk.nelind.loofah.mixin.core",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "dk.nelind.loofah.mixin.plugin.FabricMixinPlugin",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "client.MinecraftMixin_Fabric",
+    "client.server.IntegratedServerMixin_Fabric"
+  ],
+  "mixins": [
+    "server.MinecraftServerMixin_Fabric"
+  ]
+}

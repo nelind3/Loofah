@@ -19,12 +19,13 @@
       "dk.nelind.loofah.applaunch.AppLaunchMain"
     ],
     "main": [
-      "dk.nelind.loofah.main.Loofah"
+      "dk.nelind.loofah.Loofah"
     ]
   },
   "accessWidener" : "common.accesswidener",
   "mixins": [
-    "mixins.loofah.json",
+    "mixins.loofah.api.json",
+    "mixins.loofah.core.json",
     "mixins.sponge.api.json",
     "mixins.sponge.accessors.json",
     "mixins.sponge.concurrent.json",

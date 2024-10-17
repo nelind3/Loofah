@@ -1,3 +1,4 @@
+import net.fabricmc.loom.task.AbstractRunTask
 import net.fabricmc.loom.task.RemapJarTask
 import net.fabricmc.loom.task.RunGameTask
 
@@ -100,17 +101,16 @@ val fabricAppLaunch by sourceSets.register("applaunch") {
 
 val fabricMixins by sourceSets.register("mixins") {
     // implementation (compile) dependencies
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, main, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, fabricAppLaunch, this, project, this.implementationConfigurationName)
-
-    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
-
+    spongeImpl.applyNamedDependencyOnOutput(project, fabricMain, this, project, this.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
-        extendsFrom(fabricBootstrapLibrariesConfig)
+        extendsFrom(fabricLibrariesConfig)
     }
 }
 
@@ -253,6 +253,14 @@ tasks {
         filesMatching("META-INF/sponge_plugins.json") {
             expand(props)
         }
+    }
+
+    withType<AbstractRunTask> {
+        // TODO(loofah): consider putting together the whole classpath on our own
+        //  since the default one is a bit of a mess
+        // Manually add mixins to the ide run classpaths since it won't get added by loom
+        // since main doesn't (and can't) depend on mixins
+        classpath(classpath, fabricMixins.output)
     }
 
     shadowJar {
