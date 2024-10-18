@@ -20,6 +20,9 @@
     ],
     "main": [
       "dk.nelind.loofah.Loofah"
+    ],
+    "client": [
+      "dk.nelind.loofah.Loofah"
     ]
   },
   "accessWidener" : "common.accesswidener",
