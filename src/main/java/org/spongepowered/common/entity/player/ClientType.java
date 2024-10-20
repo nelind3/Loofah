@@ -36,6 +36,9 @@ public final class ClientType {
     public static final ClientType SPONGE_VANILLA = new ClientType("sponge_vanilla");
     public static final ClientType FORGE = new ClientType("forge");
     public static final ClientType SPONGE_FORGE = new ClientType("sponge_forge");
+    // Loofah start
+    public static final ClientType LOOFAH = new ClientType("loofah");
+    // Loofah end
 
     private final String name;
 

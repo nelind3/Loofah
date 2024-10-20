@@ -370,7 +370,9 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
             return;
         }
         final ClientType clientType = this.bridge$getClientType();
-        if (clientType == ClientType.SPONGE_VANILLA || clientType == ClientType.SPONGE_FORGE) {
+        // Loofah start
+        if (clientType == ClientType.SPONGE_VANILLA || clientType == ClientType.SPONGE_FORGE || clientType == ClientType.LOOFAH) {
+            // Loofah end
             SpongePacketHandler.getChannel().sendTo((ServerPlayer) this, packet);
         }
     }

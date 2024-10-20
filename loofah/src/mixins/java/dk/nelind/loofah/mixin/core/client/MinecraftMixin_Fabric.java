@@ -34,8 +34,6 @@ import org.spongepowered.common.entity.player.ClientType;
 public abstract class MinecraftMixin_Fabric implements MinecraftBridge, FabricClient {
     @Override
     public ClientType bridge$getClientType() {
-        // TODO(loofah): proper loofah client type since parts of
-        //  SpongeCommon use it to check for sponge enabled clients
-        return ClientType.from("fabric/loofah");
+        return ClientType.LOOFAH;
     }
 }
