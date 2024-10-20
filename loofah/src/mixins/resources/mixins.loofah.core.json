@@ -11,6 +11,11 @@
     "client.server.IntegratedServerMixin_Fabric"
   ],
   "mixins": [
-    "server.MinecraftServerMixin_Fabric"
+    "commands.CommandsMixin_Fabric",
+    "network.ConnectionMixin_Fabric",
+    "network.protocol.common.ClientboundCustomPayloadPacketMixin_Fabric",
+    "network.protocol.common.ServerboundCustomPayloadPacketMixin_Fabric",
+    "server.MinecraftServerMixin_Fabric",
+    "server.network.ServerGamePacketListenerImplMixin_Fabric"
   ]
 }
