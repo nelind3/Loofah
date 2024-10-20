@@ -180,7 +180,7 @@ dependencies {
     gameManagedLibraries(modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")!!)
 
     // Mod dependencies
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricApiVersion")
+    modImplementation(fabricApi.module("fabric-lifecycle-events-v1", fabricApiVersion))
 
     // API dependencies
     fabricBootstrapLibrariesConfig(apiLibs.pluginSpi) {

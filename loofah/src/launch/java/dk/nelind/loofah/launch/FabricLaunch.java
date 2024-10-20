@@ -36,7 +36,6 @@ import dk.nelind.loofah.launch.plugin.FabricPluginManager;
 import dk.nelind.loofah.launch.plugin.modbacked.FabricModBackedPluginContainer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
 import org.spongepowered.common.SpongeCommon;
 import org.spongepowered.common.SpongeLifecycle;
@@ -93,30 +92,18 @@ public class FabricLaunch extends Launch {
     }
 
     private void createPlatformPlugins() {
-        final FabricLoader loader = FabricLoader.getInstance();
-        ModContainer minecraftMod = loader.getModContainer("minecraft")
-            .orElseThrow(() -> new IllegalStateException("Tried to get the Minecraft ModContainer, " +
-                "but it wasn't available. This should be impossible!!"));
-        ModContainer fabricLoaderMod = loader.getModContainer("fabricloader")
-            .orElseThrow(() -> new IllegalStateException("Tried to get the Fabric loader ModContainer, " +
-                "but it wasn't available. This should be impossible!!"));
-        ModContainer fabricApiMod = loader.getModContainer("fabric-api")
-            .orElseThrow(() -> new IllegalStateException("Tried to get the Fabric API ModContainer ," +
-                "but it wasn't available. This should be impossible!!"));
-        ModContainer loofahMod = loader.getModContainer("loofah")
-            .orElseThrow(() -> new IllegalStateException("Tried to get own ModContainer, " +
-                "but it wasn't available. This should be impossible!!"));
+        FabricLoader.getInstance().getAllMods().stream()
+            .filter(mod ->
+                PLATFORM_PLUGINS.contains(mod.getMetadata().getId()) ||
+                mod.getMetadata().getCustomValue("fabric-api:module-lifecycle") != null
+            )
+            .map(FabricModBackedPluginContainer::of)
+            .forEach(this.pluginManager()::addPlugin);
 
-        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(minecraftMod));
-        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(fabricLoaderMod));
-        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(fabricApiMod));
-        // Get SpongeCommon and SpongeAPI plugins from the mod jar
-        // since they can't be loom included for a variety of reasons
         this.pluginPlatform().getCandidates().values().stream().flatMap(Collection::stream)
             .filter(plugin -> PLATFORM_PLUGINS.contains(plugin.metadata().id()))
             .map(FabricDummyPluginContainer::of)
             .forEach(this.pluginManager()::addPlugin);
-        this.pluginManager.addPlugin(FabricModBackedPluginContainer.of(loofahMod));
     }
 
     @Override

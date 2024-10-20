@@ -45,7 +45,7 @@
     "java": ">=${javaVersion}",
     "minecraft": "~${minecraftVersion}",
     "fabricloader": ">=${fabricLoaderVersion}",
-    "fabric-api": "*"
+    "fabric-lifecycle-events-v1": "*"
   },
   "suggests": {
     "another-mod": "*"
