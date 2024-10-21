@@ -49,12 +49,6 @@ public class FabricJavaPluginContainer extends StandardPluginContainer implement
     @Override
     protected void initializeInstance(final Object instance) {
         super.initializeInstance(instance);
-
-        Sponge.eventManager().registerListeners(this, instance);
-    }
-
-    public MethodHandles.Lookup lookup() {
-        return this.lookup;
     }
 
     public void initializeLookup(final MethodHandles.Lookup lookup) {
@@ -63,6 +57,8 @@ public class FabricJavaPluginContainer extends StandardPluginContainer implement
                 this.metadata().id()));
         }
         this.lookup = Objects.requireNonNull(lookup);
+
+        Sponge.eventManager().registerListeners(this, this.instance(), lookup);
     }
 
     @Override

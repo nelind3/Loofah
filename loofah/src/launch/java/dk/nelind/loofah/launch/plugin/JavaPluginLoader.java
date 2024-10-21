@@ -34,11 +34,15 @@ import org.spongepowered.plugin.InvalidPluginException;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.PluginLoader;
 
+import java.lang.invoke.MethodHandles;
+
 /**
  * Adapted from {@link org.spongepowered.vanilla.launch.plugin.JavaPluginLoader}
  */
 public class JavaPluginLoader implements PluginLoader<FabricJavaPluginContainer> {
     private static final ArtifactVersion VERSION = new DefaultArtifactVersion("1.0");
+
+    private static final MethodHandles.Lookup LOOFAH_LOOKUP = MethodHandles.lookup();
 
     @Override
     public ArtifactVersion version() {
@@ -64,6 +68,7 @@ public class JavaPluginLoader implements PluginLoader<FabricJavaPluginContainer>
             final Object plugin = pluginInjector.getInstance(pluginClass);
             container.setInjector(pluginInjector);
             container.initializeInstance(plugin);
+            container.initializeLookup(MethodHandles.privateLookupIn(pluginClass, LOOFAH_LOOKUP));
             return container;
         } catch (final Exception ex) {
             throw new InvalidPluginException("An error occurred creating an instance of plugin '" + container.metadata().id() + "'!", ex);
