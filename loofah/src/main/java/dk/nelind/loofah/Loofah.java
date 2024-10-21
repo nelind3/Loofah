@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.api.Client;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.common.SpongeCommon;
 import org.spongepowered.common.applaunch.config.core.ConfigHandle;
 import org.spongepowered.common.bridge.client.MinecraftBridge;
 import org.spongepowered.common.launch.Launch;
@@ -67,6 +68,8 @@ public class Loofah implements ModInitializer, ClientModInitializer {
     @Override
     public void onInitializeClient() {
         final Client minecraft = (Client) Minecraft.getInstance();
+        // Set the client early to make sure the StartingEngineEvent fires properly
+        SpongeCommon.game().setClient(minecraft);
         final Lifecycle lifecycle = Launch.instance().lifecycle();
         lifecycle.establishDataProviders();
         lifecycle.callRegisterDataEvent();
