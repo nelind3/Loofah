@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "dk.nelind.loofah.mixin.tracker",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "server.level.ServerPlayerGameModeMixin_Fabric_Tracker",
+    "world.level.block.BlocksMixin_Fabric_Tracker"
+  ]
+}
