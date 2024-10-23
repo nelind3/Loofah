@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "dk.nelind.loofah.mixin.inventory",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "event.world.level.block.entity.HopperBlockEntityMixin_Inventory_Fabric"
+  ]
+}

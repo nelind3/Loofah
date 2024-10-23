@@ -29,6 +29,7 @@
   "mixins": [
     "mixins.loofah.api.json",
     "mixins.loofah.core.json",
+    "mixins.loofah.inventory.json",
     "mixins.loofah.tracker.json",
     "mixins.sponge.api.json",
     "mixins.sponge.accessors.json",
