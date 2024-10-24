@@ -9,6 +9,7 @@
     "minecraft.client.MinecraftMixin_Fabric_API"
   ],
   "mixins": [
-    "minecraft.server.MinecraftServerMixin_Fabric_API"
+    "minecraft.server.MinecraftServerMixin_Fabric_API",
+    "minecraft.server.packs.repository.PackRepositoryMixin_Fabric_API"
   ]
 }

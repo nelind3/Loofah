@@ -16,6 +16,7 @@
     "network.protocol.common.ClientboundCustomPayloadPacketMixin_Fabric",
     "network.protocol.common.ServerboundCustomPayloadPacketMixin_Fabric",
     "server.MinecraftServerMixin_Fabric",
-    "server.network.ServerGamePacketListenerImplMixin_Fabric"
+    "server.network.ServerGamePacketListenerImplMixin_Fabric",
+    "server.packs.repository.PackRepositoryMixin_Fabric"
   ]
 }
