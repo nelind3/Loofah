@@ -16,7 +16,16 @@
     "network.protocol.common.ClientboundCustomPayloadPacketMixin_Fabric",
     "network.protocol.common.ServerboundCustomPayloadPacketMixin_Fabric",
     "server.MinecraftServerMixin_Fabric",
+    "server.level.ServerPlayerMixin_Fabric",
     "server.network.ServerGamePacketListenerImplMixin_Fabric",
-    "server.packs.repository.PackRepositoryMixin_Fabric"
+    "server.packs.repository.PackRepositoryMixin_Fabric",
+    "world.entity.EntityMixin_Fabric",
+    "world.entity.EntityTypeMixin_Fabric",
+    "world.entity.LivingEntityMixin_Attack_Impl",
+    "world.entity.LivingEntityMixin_Fabric",
+    "world.entity.ai.attributes.DefaultAttributesMixin",
+    "world.entity.item.ItemEntityMixin_Fabric",
+    "world.entity.player.PlayerMixin_Fabric_Attack_Impl",
+    "world.entity.vehicle.BoatMixin_Fabric"
   ]
 }
