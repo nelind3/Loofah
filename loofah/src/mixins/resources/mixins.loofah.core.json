@@ -11,6 +11,7 @@
     "client.server.IntegratedServerMixin_Fabric"
   ],
   "mixins": [
+    "brigdadier.exceptions.CommandSyntaxExceptionMixin_Fabric",
     "commands.CommandsMixin_Fabric",
     "network.ConnectionMixin_Fabric",
     "network.protocol.common.ClientboundCustomPayloadPacketMixin_Fabric",
