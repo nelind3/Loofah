@@ -1,10 +1,8 @@
 {
   "required": true,
+  "parent": "mixins.sponge.parent.json",
   "package": "dk.nelind.loofah.mixin.tracker",
-  "compatibilityLevel": "JAVA_21",
-  "injectors": {
-    "defaultRequire": 1
-  },
+  "priority": 1302,
   "mixins": [
     "server.level.ServerPlayerGameModeMixin_Fabric_Tracker",
     "world.level.block.BlocksMixin_Fabric_Tracker"

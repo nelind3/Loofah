@@ -1,11 +1,9 @@
 {
   "required": true,
+  "parent": "mixins.sponge.parent.json",
   "package": "dk.nelind.loofah.mixin.core",
-  "compatibilityLevel": "JAVA_21",
   "plugin": "dk.nelind.loofah.mixin.plugin.FabricMixinPlugin",
-  "injectors": {
-    "defaultRequire": 1
-  },
+  "priority": 1301,
   "client": [
     "client.ClientBrandRetrieverMixin_Fabric",
     "client.MinecraftMixin_Fabric",
@@ -32,5 +30,8 @@
     "world.level.block.FireBlockMixin_Fabric",
     "world.level.block.entity.AbstractFurnaceBlockEntityMixin_Fabric",
     "world.level.storage.LevelStorageSourceMixin_Vanilla"
-  ]
+  ],
+  "overwrites": {
+    "conformVisibility": true
+  }
 }

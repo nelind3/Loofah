@@ -49,7 +49,7 @@ import java.util.WeakHashMap;
 
 /** Copied from {@link org.spongepowered.vanilla.mixin.core.commands.CommandsMixin_Vanilla}*/
 @Mixin(Commands.class)
-public class CommandsMixin_Fabric {
+public abstract class CommandsMixin_Fabric {
     @Shadow private void shadow$fillUsableCommands(
         final CommandNode<CommandSourceStack> rootCommandSource,
         final CommandNode<SharedSuggestionProvider> rootSuggestion,
