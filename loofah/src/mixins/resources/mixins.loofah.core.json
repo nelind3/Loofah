@@ -26,6 +26,8 @@
     "world.entity.ai.attributes.DefaultAttributesMixin",
     "world.entity.item.ItemEntityMixin_Fabric",
     "world.entity.player.PlayerMixin_Fabric_Attack_Impl",
-    "world.entity.vehicle.BoatMixin_Fabric"
+    "world.entity.vehicle.BoatMixin_Fabric",
+    "world.level.block.FireBlockMixin_Fabric",
+    "world.level.block.entity.AbstractFurnaceBlockEntityMixin_Fabric"
   ]
 }
