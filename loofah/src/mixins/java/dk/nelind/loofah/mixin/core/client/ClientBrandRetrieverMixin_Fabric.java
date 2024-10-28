@@ -22,21 +22,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.mixin.core.server;
+package dk.nelind.loofah.mixin.core.client;
 
-import dk.nelind.loofah.FabricServer;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.client.ClientBrandRetriever;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(MinecraftServer.class)
-public abstract class MinecraftServerMixin_Fabric implements FabricServer {
+@Mixin(ClientBrandRetriever.class)
+public abstract class ClientBrandRetrieverMixin_Fabric {
     /**
      * @author Nelind
-     * @reason Apply branding cause this is neither Kansas nor pure Fabric
+     * @reason Like Zidane says this ain't Kansas no more
      */
     @Overwrite
-    public String getServerModName() {
+    public static String getClientModName() {
         return "fabric/loofah";
     }
 }
