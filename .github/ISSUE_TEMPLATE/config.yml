@@ -1,4 +1,4 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
   - name: Request an addition or change to the API
     url: https://github.com/SpongePowered/SpongeAPI/issues/new
