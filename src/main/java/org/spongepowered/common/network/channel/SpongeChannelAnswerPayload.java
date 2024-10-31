@@ -22,24 +22,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.mixin.core.network.protocol.login;
+package org.spongepowered.common.network.channel;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.login.ServerboundCustomQueryAnswerPacket;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.common.network.channel.SpongeChannelAnswerPayload;
+import net.minecraft.resources.ResourceLocation;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-@Mixin(ServerboundCustomQueryAnswerPacket.class)
-public abstract class ServerboundCustomQueryAnswerPacketMixin {
+import java.util.function.Consumer;
 
-    @Inject(method = "readUnknownPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;skipBytes(I)Lnet/minecraft/network/FriendlyByteBuf;"), cancellable = true)
-    private static void impl$onReadUnknownPayload(final FriendlyByteBuf $$0, final CallbackInfoReturnable<CustomQueryAnswerPayload> cir) {
-        final var payload = $$0.readNullable(buf -> new FriendlyByteBuf(buf.readBytes(buf.readableBytes())));
+/** Loofah only copy of {@link org.spongepowered.common.network.channel.SpongeChannelPayload} implementing only {@link net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload} to fix a remapping issue */
+public record SpongeChannelAnswerPayload(@Nullable Type<? extends CustomPacketPayload> type, @Nullable ResourceLocation id, @Nullable Consumer<FriendlyByteBuf> consumer) implements CustomPacketPayload, CustomQueryAnswerPayload {
 
-        cir.setReturnValue(SpongeChannelAnswerPayload.bufferOnly(payload == null ? null : buf -> buf.writeBytes(payload, payload.readerIndex(), payload.readableBytes())));
+    public void write(final FriendlyByteBuf buf) {
+        this.consumer.accept(buf);
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return this.type;
+    }
+
+    @Override
+    public ResourceLocation id() {
+        return this.id;
+    }
+
+    public static SpongeChannelAnswerPayload bufferOnly(@Nullable Consumer<FriendlyByteBuf> consumer) {
+        return new SpongeChannelAnswerPayload(null, null, consumer);
     }
 }

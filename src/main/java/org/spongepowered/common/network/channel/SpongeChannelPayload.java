@@ -28,14 +28,13 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload;
 import net.minecraft.network.protocol.login.custom.CustomQueryPayload;
 import net.minecraft.resources.ResourceLocation;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.function.Consumer;
 
-public record SpongeChannelPayload(@Nullable Type<? extends CustomPacketPayload> type, @Nullable ResourceLocation id, @Nullable Consumer<FriendlyByteBuf> consumer) implements CustomPacketPayload, CustomQueryPayload, CustomQueryAnswerPayload {
+public record SpongeChannelPayload(@Nullable Type<? extends CustomPacketPayload> type, @Nullable ResourceLocation id, @Nullable Consumer<FriendlyByteBuf> consumer) implements CustomPacketPayload, CustomQueryPayload /* Removed in Loofah because of remapping issues, CustomQueryAnswerPayload */ {
 
     public static StreamCodec<FriendlyByteBuf, SpongeChannelPayload> streamCodec(final Type<? extends CustomPacketPayload> type, final int maxPayloadSize) {
         return CustomPacketPayload.codec(
@@ -69,9 +68,5 @@ public record SpongeChannelPayload(@Nullable Type<? extends CustomPacketPayload>
 
     public static SpongeChannelPayload fromId(final ResourceLocation id, Consumer<FriendlyByteBuf> consumer) {
         return new SpongeChannelPayload(null, id, consumer);
-    }
-
-    public static SpongeChannelPayload bufferOnly(@Nullable Consumer<FriendlyByteBuf> consumer) {
-        return new SpongeChannelPayload(null, null, consumer);
     }
 }

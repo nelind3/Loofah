@@ -65,8 +65,8 @@ import org.spongepowered.common.bridge.network.ServerLoginPacketListenerImplBrid
 import org.spongepowered.common.bridge.server.players.PlayerListBridge;
 import org.spongepowered.common.network.SpongeEngineConnection;
 import org.spongepowered.common.network.channel.ConnectionUtil;
+import org.spongepowered.common.network.channel.SpongeChannelAnswerPayload;
 import org.spongepowered.common.network.channel.SpongeChannelManager;
-import org.spongepowered.common.network.channel.SpongeChannelPayload;
 import org.spongepowered.common.network.channel.TransactionStore;
 import org.spongepowered.common.profile.SpongeGameProfile;
 
@@ -288,7 +288,7 @@ public abstract class ServerLoginPacketListenerImplMixin implements ServerLoginP
 
     @Inject(method = "handleCustomQueryPacket", at = @At("HEAD"), cancellable = true)
     private void impl$onHandleCustomQueryPacket(final ServerboundCustomQueryAnswerPacket packet, final CallbackInfo ci) {
-        if (!(packet.payload() instanceof final SpongeChannelPayload payload)) {
+        if (!(packet.payload() instanceof final SpongeChannelAnswerPayload payload)) {
             return;
         }
 
