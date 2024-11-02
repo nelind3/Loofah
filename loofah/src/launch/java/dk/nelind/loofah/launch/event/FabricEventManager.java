@@ -26,11 +26,29 @@ package dk.nelind.loofah.launch.event;
 
 import com.google.inject.Singleton;
 import org.spongepowered.common.event.manager.SpongeEventManager;
+import org.spongepowered.plugin.PluginContainer;
+
+import java.lang.invoke.MethodHandles;
 
 // TODO(loofah): figure out the event situation.
 //  how much and what kind of event sync between loofah/sponge and fapi are we going to do?
 /** Copied from {@link org.spongepowered.vanilla.launch.event.VanillaEventManager} */
 @Singleton
 public class FabricEventManager extends SpongeEventManager {
+    private static final MethodHandles.Lookup LOOFAH_EVENTMANAGER_LOOKUP = MethodHandles.lookup();
 
+    @Override
+    public SpongeEventManager registerListeners(final PluginContainer plugin, final Object listener) {
+        MethodHandles.Lookup usedLookup;
+        try {
+            usedLookup = MethodHandles.privateLookupIn(listener.getClass(), FabricEventManager.LOOFAH_EVENTMANAGER_LOOKUP);
+        } catch (IllegalAccessException ex) {
+            String errorMessage = "Loofah was unable to create a lookup for " + listener +
+                " registered as an event listener by plugin " + plugin.metadata().id();
+            throw new IllegalArgumentException(errorMessage, ex);
+        }
+
+        this.registerListeners(plugin, listener, usedLookup);
+        return this;
+    }
 }
