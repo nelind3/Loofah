@@ -27,7 +27,6 @@ package dk.nelind.loofah.mixin.core.world.entity.player;
 import net.minecraft.world.entity.player.Player;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Slice;
@@ -36,7 +35,7 @@ import org.spongepowered.common.util.DamageEventUtil;
 /** Copied from {@link org.spongepowered.vanilla.mixin.core.world.entity.player.PlayerMixin_Vanilla_Attack_Impl} */
 @Mixin(Player.class)
 public class PlayerMixin_Fabric_Attack_Impl {
-    @Unique private DamageEventUtil.Attack<Player> attackImpl$attack;
+    private DamageEventUtil.Attack<Player> attackImpl$attack;
 
     /**
      * Captures the crit multiplier as a function
