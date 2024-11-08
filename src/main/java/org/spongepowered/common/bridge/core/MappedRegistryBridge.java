@@ -24,10 +24,9 @@
  */
 package org.spongepowered.common.bridge.core;
 
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 
 public interface MappedRegistryBridge<T> {
 
-    void bridge$forceRemoveValue(ResourceKey<Registry<T>> key);
+    void bridge$forceRemoveValue(ResourceKey<T> key);
 }

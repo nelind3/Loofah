@@ -22,32 +22,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.generation;
+package org.spongepowered.common.accessor.world.level.block.entity;
 
-import org.spongepowered.api.event.CauseStackManager;
-import org.spongepowered.common.event.tracking.PhaseTracker;
+import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
+import net.minecraft.world.level.block.entity.PotDecorations;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-import java.util.function.BiConsumer;
+@Mixin(DecoratedPotBlockEntity.class)
+public interface DecoratedPotBlockEntityAccessor {
 
-public final class ChunkRegeneratePhaseState extends GeneralGenerationPhaseState<ChunkRegenerateContext> {
-
-    private final BiConsumer<CauseStackManager.StackFrame, ChunkRegenerateContext> CHUNK_REGENERATE_MODIFIER =
-        super.getFrameModifier().andThen((frame, context) -> {
-            frame.pushCause(context.getChunk());
-        });
-
-    public ChunkRegeneratePhaseState() {
-        super("CHUNK_REGENERATE");
-    }
-
-    @Override
-    public ChunkRegenerateContext createNewContext(final PhaseTracker tracker) {
-        return new ChunkRegenerateContext(this, tracker);
-    }
-
-    @Override
-    public BiConsumer<CauseStackManager.StackFrame, ChunkRegenerateContext> getFrameModifier() {
-        return this.CHUNK_REGENERATE_MODIFIER;
-    }
-
+    @Accessor("decorations")
+    void accessor$setDecorations(PotDecorations decorations);
 }

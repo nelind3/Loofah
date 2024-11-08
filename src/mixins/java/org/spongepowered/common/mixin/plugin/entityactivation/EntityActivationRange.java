@@ -364,7 +364,7 @@ public final class EntityActivationRange {
      */
     public static boolean checkIfActive(final Entity entity) {
         // Never safe to skip fireworks or entities not yet added to chunk
-        if (entity instanceof Player || entity.level().isClientSide() || !entity.touchingUnloadedChunk() || entity instanceof FireworkRocketEntity) {
+        if (entity instanceof Player || entity.level().isClientSide() || entity.touchingUnloadedChunk() || entity instanceof FireworkRocketEntity) {
             return true;
         }
         final LevelChunkBridge activeChunk = ((ActiveChunkReferantBridge) entity).bridge$getActiveChunk();

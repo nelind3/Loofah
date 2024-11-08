@@ -25,8 +25,12 @@
 package org.spongepowered.common.mixin.core.world.ticks;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.ticks.LevelChunkTicks;
 import net.minecraft.world.ticks.LevelTicks;
 import net.minecraft.world.ticks.ScheduledTick;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.spongepowered.api.scheduler.ScheduledUpdate;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,32 +38,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+import org.spongepowered.common.bridge.world.ticks.LevelChunkTicksBridge;
 import org.spongepowered.common.bridge.world.ticks.LevelTicksBridge;
 import org.spongepowered.common.bridge.world.ticks.TickNextTickDataBridge;
 
-import java.util.Objects;
 import java.util.Queue;
 import java.util.function.BiConsumer;
-import java.util.function.LongSupplier;
 
 @Mixin(LevelTicks.class)
 public abstract class LevelTicksMixin<T> implements LevelTicksBridge<T> {
 
     // @formatter:off
-    private LongSupplier impl$gameTimeSupplier = () -> 0;
+    @MonotonicNonNull private ServerLevel impl$level;
     // @formatter:on
-
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
-    @Inject(
-        method = "schedule",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/ticks/LevelChunkTicks;schedule(Lnet/minecraft/world/ticks/ScheduledTick;)V"
-        )
-    )
-    private void impl$associateScheduledTickData(ScheduledTick<T> param0, CallbackInfo ci) {
-        ((TickNextTickDataBridge<T>) (Object) param0).bridge$createdByList((LevelTicks<T>) (Object) this);
-    }
 
     @SuppressWarnings("unchecked")
     @Inject(
@@ -104,16 +95,19 @@ public abstract class LevelTicksMixin<T> implements LevelTicksBridge<T> {
         return queue.add((ScheduledTick<T>) data);
     }
 
-    @Override
-    public LongSupplier bridge$getGameTime() {
-        return this.impl$gameTimeSupplier;
+    @SuppressWarnings("unchecked")
+    @Inject(method = "addContainer", at = @At("HEAD"))
+    private void impl$onAddContainer(final ChunkPos $$0, final LevelChunkTicks<T> $$1, final CallbackInfo ci) {
+        ((LevelChunkTicksBridge<T>) $$1).bridge$setTickList((LevelTicks<T>) (Object) this);
     }
 
     @Override
-    public void bridge$setGameTimeSupplier(LongSupplier supplier) {
-        this.impl$gameTimeSupplier = Objects.requireNonNull(supplier, "gametime supplier cannot be null");
+    public void bridge$level(final ServerLevel level) {
+        this.impl$level = level;
     }
 
-    //endregion
-
+    @Override
+    public ServerLevel bridge$level() {
+        return this.impl$level;
+    }
 }

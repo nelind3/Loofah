@@ -197,18 +197,18 @@ public final class RegistryHolderLogic implements RegistryHolder {
         }
 
         // This is so wrong and dirty and only because we don't have layered registries...
-        final boolean frozen = ((MappedRegistryAccessor<T>) root).accessor$frozen();
+        final boolean frozen = ((MappedRegistryAccessor<net.minecraft.core.Registry<T>>) root).accessor$frozen();
 
         if (replace && exists) {
-            ((MappedRegistryAccessor<T>) root).accessor$frozen(false);
-            ((MappedRegistryBridge<T>) root).bridge$forceRemoveValue(key);
+            ((MappedRegistryAccessor<net.minecraft.core.Registry<T>>) root).accessor$frozen(false);
+            ((MappedRegistryBridge<net.minecraft.core.Registry<T>>) root).bridge$forceRemoveValue(key);
         }
 
         ((WritableRegistry) root).register(key, registry, RegistrationInfo.BUILT_IN);
         if (registry instanceof CallbackRegistry) {
             ((CallbackRegistry<?>) registry).setCallbackEnabled(true);
         }
-        ((MappedRegistryAccessor<T>) root).accessor$frozen(frozen);
+        ((MappedRegistryAccessor<net.minecraft.core.Registry<T>>) root).accessor$frozen(frozen);
 
         return (Registry<T>) registry;
     }

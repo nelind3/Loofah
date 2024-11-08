@@ -22,20 +22,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.entity;
+package org.spongepowered.common.mixin.api.minecraft.world.item.armortrim;
 
-import org.spongepowered.common.event.tracking.PhaseTracker;
-import org.spongepowered.common.event.tracking.TrackingUtil;
+import net.minecraft.world.item.armortrim.TrimPattern;
+import org.spongepowered.asm.mixin.Mixin;
 
-final class PlayerWakeUpState extends EntityPhaseState<BasicEntityContext> {
-
-    @Override
-    public BasicEntityContext createNewContext(final PhaseTracker tracker) {
-        return new BasicEntityContext(this, tracker);
-    }
-
-    @Override
-    public void unwind(final BasicEntityContext context) {
-        TrackingUtil.processBlockCaptures(context);
-    }
+@Mixin(TrimPattern.class)
+public class TrimPatternMixin_API implements org.spongepowered.api.item.recipe.smithing.TrimPattern {
 }

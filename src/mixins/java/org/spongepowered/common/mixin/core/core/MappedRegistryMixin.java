@@ -25,6 +25,8 @@
 package org.spongepowered.common.mixin.core.core;
 
 import com.mojang.serialization.Lifecycle;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import net.minecraft.core.Holder;
 import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.RegistrationInfo;
@@ -55,8 +57,13 @@ import java.util.stream.Stream;
 @Mixin(MappedRegistry.class)
 public abstract class MappedRegistryMixin<T> implements RegistryBridge<T>, WritableRegistryBridge<T>, MappedRegistryBridge<T> {
 
+    @Shadow @Final private ObjectList<Holder.Reference<T>> byId;
+    @Shadow @Final private Reference2IntMap<T> toId;
     @Shadow @Final private Map<ResourceLocation, Holder.Reference<T>> byLocation;
+    @Shadow @Final private Map<net.minecraft.resources.ResourceKey<T>, Holder.Reference<T>> byKey;
     @Shadow @Final private Map<T, Holder.Reference<T>> byValue;
+    @Shadow @Final private Map<net.minecraft.resources.ResourceKey<T>, RegistrationInfo> registrationInfos;
+
     private RegistryType<T> impl$type;
     private final Map<ResourceKey, RegistryEntry<T>> impl$entries = new LinkedHashMap<>();
 
@@ -113,8 +120,17 @@ public abstract class MappedRegistryMixin<T> implements RegistryBridge<T>, Writa
     }
 
     @Override
-    public void bridge$forceRemoveValue(net.minecraft.resources.ResourceKey<Registry<T>> key) {
-        this.byLocation.remove(key);
-        this.byValue.remove(key);
+    public void bridge$forceRemoveValue(net.minecraft.resources.ResourceKey<T> key) {
+        //WARNING: THIS DESYNCS THE IDS!
+        final Holder.Reference<T> value = this.byKey.remove(key);
+        final int id = this.toId.removeInt(value.value());
+        this.byId.remove(id);
+        for (int i = id; i < this.byId.size(); i++) {
+            this.toId.put(this.byId.get(i).value(), i);
+        }
+        this.byLocation.remove(key.location());
+        this.byValue.remove(value.value());
+        this.registrationInfos.remove(key);
+        this.impl$entries.remove((ResourceKey) (Object) key.location());
     }
 }

@@ -29,12 +29,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.bossevents.CustomBossEvents;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.level.progress.ChunkProgressListener;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
@@ -51,7 +53,6 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.dimension.end.EndDragonFight;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.PrimaryLevelData;
@@ -157,8 +158,8 @@ public abstract class ServerLevelMixin extends LevelMixin implements ServerLevel
         this.impl$levelSave = $$2;
         this.impl$chunkStatusListener = $$6;
         this.impl$prevWeather = ((ServerWorld) this).weather();
-        ((LevelTicksBridge<?>) this.blockTicks).bridge$setGameTimeSupplier(this.levelData::getGameTime);
-        ((LevelTicksBridge<?>) this.fluidTicks).bridge$setGameTimeSupplier(this.levelData::getGameTime);
+        ((LevelTicksBridge<?>) this.blockTicks).bridge$level((ServerLevel) (Object) this);
+        ((LevelTicksBridge<?>) this.fluidTicks).bridge$level((ServerLevel) (Object) this);
 
         final Boolean createDragonFight = ((DimensionTypeBridge) (Object) this.shadow$dimensionType()).bridge$createDragonFight();
         if (createDragonFight != null) {
@@ -169,11 +170,6 @@ public abstract class ServerLevelMixin extends LevelMixin implements ServerLevel
                 this.dragonFight = null;
             }
         }
-    }
-
-    @Redirect(method = "getSeed", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/WorldData;worldGenOptions()Lnet/minecraft/world/level/levelgen/WorldOptions;"))
-    public WorldOptions impl$onGetSeed(final WorldData iServerConfiguration) {
-        return ((PrimaryLevelData) this.serverLevelData).worldGenOptions();
     }
 
     @Override
@@ -305,8 +301,14 @@ public abstract class ServerLevelMixin extends LevelMixin implements ServerLevel
         return this.impl$recentTickTimes;
     }
 
-    @Redirect(method = "saveLevelData", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;getWorldData()Lnet/minecraft/world/level/storage/WorldData;"))
-    private WorldData impl$usePerWorldLevelDataForDragonFight(final MinecraftServer server) {
+    @Redirect(method = {
+        "saveLevelData",
+        "findNearestMapStructure",
+        "isFlat",
+        "getSeed",
+        "enabledFeatures"
+    }, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;getWorldData()Lnet/minecraft/world/level/storage/WorldData;"))
+    private WorldData impl$usePerWorldLevelData(final MinecraftServer server) {
         return (WorldData) this.shadow$getLevelData();
     }
 
@@ -536,5 +538,15 @@ public abstract class ServerLevelMixin extends LevelMixin implements ServerLevel
                 .add("key=" + this.shadow$dimension())
                 .add("worldType=" + worldTypeKey.map(ResourceKey::toString).orElse("inline"))
                 .toString();
+    }
+
+    @Redirect(method = {
+        "advanceWeatherCycle",
+        "globalLevelEvent",
+        "setDefaultSpawnPos"
+    }, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;broadcastAll(Lnet/minecraft/network/protocol/Packet;)V"))
+    private void impl$broadcastAllCurrentDimensionOnly(final PlayerList instance, final Packet<?> $$0) {
+        //Weather, game rules and spawns are per world in Sponge.
+        instance.broadcastAll($$0, this.shadow$dimension());
     }
 }

@@ -22,20 +22,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.general;
+package org.spongepowered.common.accessor.util.thread;
 
-import org.spongepowered.common.event.tracking.PhaseTracker;
-import org.spongepowered.common.event.tracking.PooledPhaseState;
+import net.minecraft.util.thread.ProcessorMailbox;
+import net.minecraft.util.thread.StrictQueue;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-public class SaveHandlerCreationPhase extends PooledPhaseState<SaveHandlerCreationContext> {
+@Mixin(ProcessorMailbox.class)
+public interface ProcessorMailboxAccessor<T> {
 
-    @Override
-    protected SaveHandlerCreationContext createNewContext(final PhaseTracker phaseTracker) {
-        return new SaveHandlerCreationContext(this, phaseTracker);
-    }
-
-    @Override
-    public void unwind(SaveHandlerCreationContext phaseContext) {
-    }
-
+    @Accessor("queue") StrictQueue<? super T, ? extends Runnable> accessor$queue();
 }

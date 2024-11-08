@@ -22,37 +22,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.generation;
+package org.spongepowered.common.mixin.api.minecraft.world.entity.animal;
 
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.chunk.ChunkSource;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.PhaseTracker;
-import org.spongepowered.common.util.PrettyPrinter;
+import net.minecraft.world.entity.animal.FrogVariant;
+import org.spongepowered.api.data.type.FrogType;
+import org.spongepowered.asm.mixin.Mixin;
 
-public final class GenerationCompatibileContext extends GenerationContext<GenerationCompatibileContext> {
-
-    @Nullable ChunkSource provider;
-    @Nullable ChunkGenerator generator;
-
-    GenerationCompatibileContext(final IPhaseState<GenerationCompatibileContext> state, final PhaseTracker tracker) {
-        super(state, tracker);
-    }
-
-    @Override
-    protected void reset() {
-        super.reset();
-        this.provider = null;
-        this.generator = null;
-    }
-
-    @Override
-    public PrettyPrinter printCustom(final PrettyPrinter printer, final int indent) {
-        final String s = String.format("%1$" + indent + "s", "");
-        return super.printCustom(printer, indent)
-            .add(s + "- %s: %s", "ChunkProvider", this.provider)
-            .add(s + "- %s: %s", "Mod Provided Chunk Generator", this.generator);
-
-    }
+@Mixin(FrogVariant.class)
+public abstract class FrogVariantMixin_API implements FrogType {
 }

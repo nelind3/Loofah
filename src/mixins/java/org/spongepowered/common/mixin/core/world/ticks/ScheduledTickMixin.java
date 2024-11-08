@@ -27,7 +27,7 @@ package org.spongepowered.common.mixin.core.world.ticks;
 
 import net.kyori.adventure.util.Ticks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.ticks.LevelTicks;
 import net.minecraft.world.ticks.ScheduledTick;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -57,15 +57,10 @@ public abstract class ScheduledTickMixin<T> implements TickNextTickDataBridge<T>
     @SuppressWarnings("unchecked")
     @Override
     public void bridge$createdByList(final LevelTicks<T> tickList) {
+        final ServerLevel level = ((LevelTicksBridge<T>) tickList).bridge$level();
         this.impl$parentTickList = tickList;
-        this.impl$scheduledTime = ((LevelTicksBridge<T>) tickList).bridge$getGameTime().getAsLong();
-    }
-
-    @Override
-    public void bridge$setWorld(final Level world) {
-        Preconditions.checkState(this.impl$location == null, "World already known");
-        final BlockPos position = this.pos;
-        this.impl$location = ServerLocation.of((ServerWorld) world, position.getX(), position.getY(), position.getZ());
+        this.impl$scheduledTime = level.getLevelData().getGameTime();
+        this.impl$location = ServerLocation.of((ServerWorld) level, this.pos.getX(), this.pos.getY(), this.pos.getZ());
     }
 
     @Override

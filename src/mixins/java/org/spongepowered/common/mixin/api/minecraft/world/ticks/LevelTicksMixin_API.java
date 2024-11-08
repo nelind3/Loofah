@@ -40,7 +40,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.common.bridge.world.ticks.LevelTicksBridge;
-import org.spongepowered.common.bridge.world.ticks.TickNextTickDataBridge;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -81,12 +80,12 @@ public abstract class LevelTicksMixin_API<T> implements ScheduledUpdateList<T> {
             throw new IllegalArgumentException("Delay cannot be infinite!");
         }
         final var blockPos = new BlockPos(x, y, z);
-        final var gameTime = ((LevelTicksBridge<T>) this).bridge$getGameTime().getAsLong();
-        final var subCount = ((LevelTicksBridge<T>) this).bridge$getNextSubTickCountSupplier().getAsLong();
+        final var level = ((LevelTicksBridge<T>) this).bridge$level();
+        final var gameTime = level.getLevelData().getGameTime();
+        final var subCount = level.nextSubTickCount();
         final var scheduledUpdate = new ScheduledTick<>(
             target, blockPos, tickDelay.ticks() + gameTime, (TickPriority) (Object) priority, subCount);
-        if (!this.tickCheck.test(ChunkPos.asLong(blockPos))) {
-            ((TickNextTickDataBridge<T>) (Object) scheduledUpdate).bridge$createdByList((LevelTicks<T>) (Object) this);
+        if (this.tickCheck.test(ChunkPos.asLong(blockPos))) {
             this.shadow$schedule(scheduledUpdate);
         }
         return (ScheduledUpdate<T>) (Object) scheduledUpdate;

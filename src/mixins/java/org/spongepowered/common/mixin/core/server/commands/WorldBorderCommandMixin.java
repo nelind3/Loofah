@@ -22,14 +22,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.generation;
+package org.spongepowered.common.mixin.core.server.commands;
 
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.PhaseTracker;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.commands.WorldBorderCommand;
+import net.minecraft.server.level.ServerLevel;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-public final class PopulatorPhaseContext extends GenerationContext<PopulatorPhaseContext> {
+@Mixin(WorldBorderCommand.class)
+public abstract class WorldBorderCommandMixin {
 
-    PopulatorPhaseContext(final IPhaseState<PopulatorPhaseContext> state, final PhaseTracker tracker) {
-        super(state, tracker);
+    @Redirect(method = {
+        "setDamageBuffer",
+        "setDamageAmount",
+        "setWarningTime",
+        "setWarningDistance",
+        "getSize",
+        "setCenter",
+        "setSize"
+    }, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;overworld()Lnet/minecraft/server/level/ServerLevel;"))
+    private static ServerLevel impl$useCurrentWorld(final MinecraftServer instance, final CommandSourceStack $$0) {
+        return $$0.getLevel();
     }
 }

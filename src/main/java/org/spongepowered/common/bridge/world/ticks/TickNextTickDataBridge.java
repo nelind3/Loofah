@@ -24,7 +24,6 @@
  */
 package org.spongepowered.common.bridge.world.ticks;
 
-import net.minecraft.world.level.Level;
 import net.minecraft.world.ticks.LevelTicks;
 import org.spongepowered.api.scheduler.ScheduledUpdate;
 import org.spongepowered.api.world.server.ServerLocation;
@@ -34,8 +33,6 @@ import java.time.Duration;
 public interface TickNextTickDataBridge<T> {
 
     void bridge$createdByList(LevelTicks<T> tickList);
-
-    void bridge$setWorld(Level world);
 
     ServerLocation bridge$getLocation();
 

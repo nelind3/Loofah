@@ -122,6 +122,7 @@ public final class SpongeFlatGeneratorConfig {
 
         @Override
         public FlatGeneratorConfig.Builder from(final FlatGeneratorConfig value) {
+            this.biome = value.biome();
             this.layers.addAll(value.layers());
             this.performDecoration = value.performDecoration();
             this.populateLakes = value.populateLakes();

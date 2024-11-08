@@ -22,18 +22,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.generation;
+package org.spongepowered.common.item.recipe.smithing;
 
-import org.spongepowered.common.event.tracking.PhaseTracker;
+import net.minecraft.core.Registry;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.item.recipe.smithing.ArmorTrim;
+import org.spongepowered.api.item.recipe.smithing.TrimMaterial;
+import org.spongepowered.api.item.recipe.smithing.TrimPattern;
+import org.spongepowered.api.registry.RegistryTypes;
 
-final class GenerationCompatibilityState extends GeneralGenerationPhaseState<GenerationCompatibileContext> {
-
-    GenerationCompatibilityState() {
-        super("COMPATIBILITY_POPULATOR");
-    }
+public class SpongeArmorTrimFactory implements ArmorTrim.Factory {
 
     @Override
-    public GenerationCompatibileContext createNewContext(final PhaseTracker tracker) {
-        return new GenerationCompatibileContext(this, tracker);
+    public ArmorTrim create(TrimMaterial material, TrimPattern pattern) {
+
+        final var trimRegistry = Sponge.server().registry(RegistryTypes.TRIM_MATERIAL);
+        final var patternRegistry = Sponge.server().registry(RegistryTypes.TRIM_PATTERN);
+
+        final var materialHolder = ((Registry<net.minecraft.world.item.armortrim.TrimMaterial>) trimRegistry).wrapAsHolder((net.minecraft.world.item.armortrim.TrimMaterial) (Object) material);
+        final var patternHolder = ((Registry<net.minecraft.world.item.armortrim.TrimPattern>) patternRegistry).wrapAsHolder((net.minecraft.world.item.armortrim.TrimPattern) (Object) pattern);
+        return (ArmorTrim) new net.minecraft.world.item.armortrim.ArmorTrim(materialHolder, patternHolder);
     }
+
 }

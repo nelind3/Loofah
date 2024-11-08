@@ -22,43 +22,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.generation;
+package org.spongepowered.common.mixin.api.minecraft.world.item.armortrim;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.api.world.chunk.WorldChunk;
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.PhaseTracker;
-import org.spongepowered.common.util.PrettyPrinter;
+import net.minecraft.core.Holder;
+import net.minecraft.world.item.armortrim.ArmorTrim;
+import org.spongepowered.api.item.recipe.smithing.TrimMaterial;
+import org.spongepowered.api.item.recipe.smithing.TrimPattern;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 
+@Mixin(ArmorTrim.class)
+public abstract class ArmorTrimMixin_API implements org.spongepowered.api.item.recipe.smithing.ArmorTrim {
 
-public class ChunkRegenerateContext extends GenerationContext<ChunkRegenerateContext> {
+    // @formatter:off
+    @Shadow public abstract Holder<net.minecraft.world.item.armortrim.TrimMaterial> shadow$material();
+    @Shadow public abstract Holder<net.minecraft.world.item.armortrim.TrimPattern> shadow$pattern();
+    // @formatter:on
 
-    private @Nullable WorldChunk chunk;
-
-    public ChunkRegenerateContext(final IPhaseState<ChunkRegenerateContext> state, final PhaseTracker tracker) {
-        super(state, tracker);
+    @Override
+    public TrimMaterial material() {
+        return (TrimMaterial) this.shadow$material();
     }
 
     @Override
-    protected void reset() {
-        super.reset();
-        this.chunk = null;
-    }
-
-    @SuppressWarnings("unchecked")
-    public ChunkRegenerateContext chunk(final net.minecraft.world.level.chunk.LevelChunk chunk) {
-        this.chunk = (WorldChunk) chunk;
-        return this;
-    }
-
-    public final WorldChunk getChunk() {
-        return this.chunk;
-    }
-
-    @Override
-    public PrettyPrinter printCustom(final PrettyPrinter printer, final int indent) {
-        final String s = String.format("%1$" + indent + "s", "");
-        return super.printCustom(printer, indent)
-            .add(s + "- %s: %s", "Chunk", this.chunk);
+    public TrimPattern pattern() {
+        return (TrimPattern) this.shadow$pattern();
     }
 }

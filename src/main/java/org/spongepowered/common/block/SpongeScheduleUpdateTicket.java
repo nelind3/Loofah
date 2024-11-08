@@ -22,18 +22,56 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.generation;
+package org.spongepowered.common.block;
 
-import org.spongepowered.common.event.tracking.PhaseTracker;
+import org.spongepowered.api.block.transaction.ScheduleUpdateTicket;
+import org.spongepowered.api.scheduler.TaskPriority;
+import org.spongepowered.api.world.LocatableBlock;
 
-final class PopulatorGenerationPhaseState extends GeneralGenerationPhaseState<PopulatorPhaseContext> {
+import java.time.Duration;
 
-    PopulatorGenerationPhaseState(final String id) {
-        super(id);
+public final class SpongeScheduleUpdateTicket<T> implements ScheduleUpdateTicket<T> {
+
+    private final LocatableBlock block;
+    private final T target;
+    private final Duration delay;
+    private final TaskPriority priority;
+    private boolean valid = true;
+
+    public SpongeScheduleUpdateTicket(final LocatableBlock block, final T target, final Duration delay, final TaskPriority priority) {
+        this.block = block;
+        this.target = target;
+        this.delay = delay;
+        this.priority = priority;
     }
 
     @Override
-    public PopulatorPhaseContext createNewContext(final PhaseTracker tracker) {
-        return new PopulatorPhaseContext(this, tracker);
+    public LocatableBlock block() {
+        return this.block;
+    }
+
+    @Override
+    public T target() {
+        return this.target;
+    }
+
+    @Override
+    public Duration delay() {
+        return this.delay;
+    }
+
+    @Override
+    public TaskPriority priority() {
+        return this.priority;
+    }
+
+    @Override
+    public boolean valid() {
+        return this.valid;
+    }
+
+    @Override
+    public void setValid(final boolean valid) {
+        this.valid = valid;
     }
 }

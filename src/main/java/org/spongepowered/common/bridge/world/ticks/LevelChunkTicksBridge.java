@@ -22,21 +22,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.general;
+package org.spongepowered.common.bridge.world.ticks;
 
-import org.spongepowered.common.event.tracking.PhaseTracker;
-import org.spongepowered.common.event.tracking.context.GeneralizedContext;
+import net.minecraft.world.ticks.LevelTicks;
 
-public class WorldUnload extends GeneralState<GeneralizedContext> {
+public interface LevelChunkTicksBridge<T> {
 
-
-    @Override
-    public GeneralizedContext createNewContext(final PhaseTracker tracker) {
-        return new GeneralizedContext(this, tracker);
-    }
-
-    @Override
-    public void unwind(final GeneralizedContext context) {
-
-    }
+    void bridge$setTickList(LevelTicks<T> tickList);
 }

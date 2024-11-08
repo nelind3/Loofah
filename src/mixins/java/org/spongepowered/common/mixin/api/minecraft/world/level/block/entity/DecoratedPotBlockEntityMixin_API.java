@@ -22,16 +22,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.plugin;
+package org.spongepowered.common.mixin.api.minecraft.world.level.block.entity;
 
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.PhaseTracker;
+import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
+import org.spongepowered.api.block.entity.DecoratedPot;
+import org.spongepowered.api.data.value.Value;
+import org.spongepowered.asm.mixin.Mixin;
 
-public class VolumeStreamContext extends BasicPluginContext {
-    VolumeStreamContext(
-        IPhaseState<BasicPluginContext> phaseState,
-        PhaseTracker tracker
-    ) {
-        super(phaseState, tracker);
+import java.util.Set;
+
+@Mixin(DecoratedPotBlockEntity.class)
+public abstract class DecoratedPotBlockEntityMixin_API extends BlockEntityMixin_API implements DecoratedPot {
+
+
+    @Override
+    protected Set<Value.Immutable<?>> api$getVanillaValues() {
+        final Set<Value.Immutable<?>> values = super.api$getVanillaValues();
+
+        values.add(this.front().asImmutable());
+        values.add(this.left().asImmutable());
+        values.add(this.right().asImmutable());
+        values.add(this.back().asImmutable());
+
+        return values;
     }
 }

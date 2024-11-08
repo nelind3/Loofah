@@ -34,6 +34,7 @@ import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.resources.ResourceLocation;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.spongepowered.api.advancement.criteria.AdvancementCriterion;
 import org.spongepowered.api.advancement.criteria.AndCriterion;
 import org.spongepowered.api.advancement.criteria.OrCriterion;
@@ -66,24 +67,32 @@ import java.util.Set;
 public abstract class AdvancementMixin implements AdvancementBridge {
 
     @Shadow @Final private Optional<DisplayInfo> display;
-    private AdvancementCriterion impl$criterion;
-    private List<Component> impl$toastText;
+    @Shadow @Final private Map<String, Criterion<?>> criteria;
+    @Shadow @Final private AdvancementRequirements requirements;
+    @MonotonicNonNull private AdvancementCriterion impl$criterion;
+    @MonotonicNonNull private List<Component> impl$toastText;
 
     @SuppressWarnings({"ConstantConditions"})
     @Inject(method = "<init>(Ljava/util/Optional;Ljava/util/Optional;Lnet/minecraft/advancements/AdvancementRewards;Ljava/util/Map;Lnet/minecraft/advancements/AdvancementRequirements;Z)V", at = @At("RETURN"))
     private void impl$setUpSpongeFields(final Optional<ResourceLocation> parent, final Optional<DisplayInfo> displayInfo, final AdvancementRewards $$2,
             final  Map<String, Criterion<?>> criteria, final AdvancementRequirements requirements, final boolean sendsTelemetryEvent, final CallbackInfo ci) {
-        // Don't do anything on the client, unless we're performing registry initialization
-        if (!PlatformHooks.INSTANCE.getGeneralHooks().onServerThread()) {
-            return;
-        }
         displayInfo.ifPresent(info -> ((DisplayInfoBridge) info).bridge$setAdvancement((org.spongepowered.api.advancement.Advancement) this));
+    }
 
-        this.impl$toastText = this.impl$generateToastText();
+    private ImmutableList<Component> impl$generateToastText() {
+        final ImmutableList.Builder<Component> toastText = ImmutableList.builder();
+        if (this.display.isPresent()) {
+            final AdvancementType frameType = this.display.get().getType();
+            toastText.add(Component.translatable("advancements.toast." + frameType.getSerializedName(), SpongeAdventure.asAdventureNamed(frameType.getChatColor())));
+            toastText.add(SpongeAdventure.asAdventure(this.display.get().getTitle()));
+        } // else no display
+        return toastText.build();
+    }
 
+    private AdvancementCriterion impl$generateCriterion() {
         final Map<String, DefaultedAdvancementCriterion> criteriaMap = new LinkedHashMap<>();
         final Map<String, List<DefaultedAdvancementCriterion>> scoreCriteria = new HashMap<>();
-        for (Map.Entry<String, Criterion<?>> entry : criteria.entrySet()) {
+        for (Map.Entry<String, Criterion<?>> entry : this.criteria.entrySet()) {
             final CriterionBridge mixinCriterion = (CriterionBridge) (Object) entry.getValue();
             final String groupName = mixinCriterion.bridge$getScoreCriterionName();
             if (groupName != null) {
@@ -99,12 +108,12 @@ public abstract class AdvancementMixin implements AdvancementBridge {
         }
 
         final Set<AdvancementCriterion> andCriteria = new HashSet<>();
-        for (final List<String> array : requirements.requirements()) {
+        for (final List<String> array : this.requirements.requirements()) {
             final Set<AdvancementCriterion> orCriteria = new HashSet<>();
             for (final String name : array) {
                 DefaultedAdvancementCriterion criterion = criteriaMap.get(name);
-                if (criterion == null && criteria.get(name) != null) { // internal removed by scoreCriterion
-                    criterion = criteriaMap.get(((CriterionBridge) (Object) criteria.get(name)).bridge$getScoreCriterionName());
+                if (criterion == null && this.criteria.get(name) != null) { // internal removed by scoreCriterion
+                    criterion = criteriaMap.get(((CriterionBridge) (Object) this.criteria.get(name)).bridge$getScoreCriterionName());
                 }
                 if (criterion != null) {
                     orCriteria.add(criterion);
@@ -112,22 +121,15 @@ public abstract class AdvancementMixin implements AdvancementBridge {
             }
             andCriteria.add(OrCriterion.of(orCriteria));
         }
-        this.impl$criterion = AndCriterion.of(andCriteria);
-    }
-
-    private ImmutableList<Component> impl$generateToastText() {
-        final ImmutableList.Builder<Component> toastText = ImmutableList.builder();
-        if (this.display.isPresent()) {
-            final AdvancementType frameType = this.display.get().getType();
-            toastText.add(Component.translatable("advancements.toast." + frameType.getSerializedName(), SpongeAdventure.asAdventureNamed(frameType.getChatColor())));
-            toastText.add(SpongeAdventure.asAdventure(this.display.get().getTitle()));
-        } // else no display
-        return toastText.build();
+        return AndCriterion.of(andCriteria);
     }
 
     @Override
     public AdvancementCriterion bridge$getCriterion() {
         Preconditions.checkState(PlatformHooks.INSTANCE.getGeneralHooks().onServerThread());
+        if (this.impl$criterion == null) {
+            this.impl$criterion = this.impl$generateCriterion();
+        }
         return this.impl$criterion;
     }
 
@@ -141,6 +143,9 @@ public abstract class AdvancementMixin implements AdvancementBridge {
     @Override
     public List<Component> bridge$getToastText() {
         Preconditions.checkState(PlatformHooks.INSTANCE.getGeneralHooks().onServerThread());
+        if (this.impl$toastText == null) {
+            this.impl$toastText = this.impl$generateToastText();
+        }
         return this.impl$toastText;
     }
 

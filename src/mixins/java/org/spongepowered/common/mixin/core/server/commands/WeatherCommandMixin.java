@@ -22,26 +22,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.general;
+package org.spongepowered.common.mixin.core.server.commands;
 
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.PhaseContext;
-import org.spongepowered.common.event.tracking.PhaseTracker;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.commands.WeatherCommand;
+import net.minecraft.server.level.ServerLevel;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-public class SaveHandlerCreationContext extends PhaseContext<SaveHandlerCreationContext> {
+@Mixin(WeatherCommand.class)
+public abstract class WeatherCommandMixin {
 
-    private boolean createFiles;
-
-    protected SaveHandlerCreationContext(final IPhaseState<SaveHandlerCreationContext> state, final PhaseTracker tracker) {
-        super(state, tracker);
-    }
-
-    public SaveHandlerCreationContext createFiles(final boolean createFolders) {
-        this.createFiles = createFolders;
-        return this;
-    }
-
-    public boolean isCreateFiles() {
-        return this.createFiles;
+    @Redirect(method = {
+        "getDuration",
+        "setClear",
+        "setRain",
+        "setThunder"
+    }, at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;overworld()Lnet/minecraft/server/level/ServerLevel;"))
+    private static ServerLevel impl$useCurrentWorld(final MinecraftServer instance, final CommandSourceStack $$0) {
+        return $$0.getLevel();
     }
 }

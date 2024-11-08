@@ -50,6 +50,7 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeCommon;
+import org.spongepowered.common.accessor.util.thread.ProcessorMailboxAccessor;
 import org.spongepowered.common.accessor.world.level.chunk.storage.IOWorker$PendingStoreAccessor;
 import org.spongepowered.common.bridge.world.level.chunk.storage.IOWorkerBridge;
 import org.spongepowered.common.event.ShouldFire;
@@ -181,5 +182,19 @@ public abstract class IOWorkerMixin implements IOWorkerBridge {
         //Sponge end
 
         return future;
+    }
+
+    @Override
+    public void bridge$forciblyClear() {
+        final StrictQueue<?, ?> queue = ((ProcessorMailboxAccessor<?>) this.mailbox).accessor$queue();
+        while (!queue.isEmpty()) {
+            queue.pop();
+        }
+        this.mailbox.tell(new StrictQueue.IntRunnable(0, () -> {
+            this.pendingWrites.clear();
+            while (!queue.isEmpty()) {
+                queue.pop();
+            }
+        }));
     }
 }

@@ -22,23 +22,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.block;
+package org.spongepowered.common.mixin.api.minecraft.world.item.armortrim;
 
-import org.spongepowered.api.event.CauseStackManager;
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.context.GeneralizedContext;
+import net.minecraft.world.item.armortrim.TrimMaterial;
+import org.spongepowered.asm.mixin.Mixin;
 
-import java.util.function.BiConsumer;
-
-/**
- * Used in SpongeForge
- */
-public class TileChunkUnloadState extends BlockPhaseState {
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public BiConsumer<CauseStackManager.StackFrame, GeneralizedContext> getFrameModifier() {
-        return (BiConsumer<CauseStackManager.StackFrame, GeneralizedContext>) IPhaseState.DEFAULT_OWNER_NOTIFIER;
-    }
+@Mixin(TrimMaterial.class)
+public class TrimMaterialMixin_API implements org.spongepowered.api.item.recipe.smithing.TrimMaterial {
 
 }

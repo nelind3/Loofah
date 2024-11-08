@@ -22,20 +22,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.event.tracking.phase.block;
+package org.spongepowered.common.data.provider.entity;
 
-import org.spongepowered.api.event.CauseStackManager;
-import org.spongepowered.common.event.tracking.IPhaseState;
-import org.spongepowered.common.event.tracking.context.GeneralizedContext;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.animal.FrogVariant;
+import net.minecraft.world.entity.animal.frog.Frog;
+import org.spongepowered.api.data.Keys;
+import org.spongepowered.api.data.type.FrogType;
+import org.spongepowered.common.data.provider.DataProviderRegistrator;
 
-import java.util.function.BiConsumer;
+public final class FrogData {
 
-public final class TileEntityInvalidatingPhaseState extends BlockPhaseState {
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public BiConsumer<CauseStackManager.StackFrame, GeneralizedContext> getFrameModifier() {
-        return (BiConsumer<CauseStackManager.StackFrame, GeneralizedContext>) IPhaseState.DEFAULT_OWNER_NOTIFIER;
+    private FrogData() {
     }
 
+    // @formatter:off
+    public static void register(final DataProviderRegistrator registrator) {
+        registrator
+                .asMutable(Frog.class)
+                    .create(Keys.FROG_TYPE)
+                        .get(h -> (FrogType) (Object) h.getVariant().value())
+                        .set((h, v) -> h.setVariant(BuiltInRegistries.FROG_VARIANT.wrapAsHolder((FrogVariant) (Object) v)));
+    }
+    // @formatter:on
 }
