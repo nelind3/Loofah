@@ -29,7 +29,8 @@ import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-@Mixin(MinecraftServer.class)
+// Lower the priority to override the server mod name from SpongeCommon
+@Mixin(value = MinecraftServer.class, priority = 1102)
 public abstract class MinecraftServerMixin_Fabric implements FabricServer {
     /**
      * @author Nelind
