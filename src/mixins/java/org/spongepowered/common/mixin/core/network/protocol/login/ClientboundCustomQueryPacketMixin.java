@@ -36,7 +36,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.network.channel.SpongeChannelPayload;
 
-@Mixin(ClientboundCustomQueryPacket.class)
+// Loofah : Take down the priority to make sure we override FAPI networking API
+@Mixin(value = ClientboundCustomQueryPacket.class, priority = 999)
 public abstract class ClientboundCustomQueryPacketMixin {
 
     // @formatter: off

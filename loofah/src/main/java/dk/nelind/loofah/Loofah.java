@@ -24,6 +24,7 @@
  */
 package dk.nelind.loofah;
 
+import dk.nelind.loofah.hooks.FabricChannelHooks;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
@@ -39,6 +40,7 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.common.SpongeCommon;
 import org.spongepowered.common.applaunch.config.core.ConfigHandle;
 import org.spongepowered.common.bridge.client.MinecraftBridge;
+import org.spongepowered.common.hooks.PlatformHooks;
 import org.spongepowered.common.launch.Launch;
 import org.spongepowered.common.launch.Lifecycle;
 import org.spongepowered.common.network.channel.SpongeChannelManager;
@@ -63,6 +65,7 @@ public class Loofah implements ModInitializer, ClientModInitializer {
 
         SpongePacketHandler.init((SpongeChannelManager) Sponge.channelManager());
         this.registerLifecycleEvents();
+        PlatformHooks.INSTANCE.setChannelHooks(new FabricChannelHooks());
     }
 
     @Override

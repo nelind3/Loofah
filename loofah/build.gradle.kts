@@ -152,6 +152,8 @@ loom {
         }
         environmentVariable("SPONGE_PLUGINS", envPlugins)
     }
+
+    createRemapConfigurations(fabricMixins)
 }
 
 tasks {
@@ -181,6 +183,7 @@ dependencies {
 
     // Mod dependencies
     modImplementation(fabricApi.module("fabric-lifecycle-events-v1", fabricApiVersion))
+    "modMixinsImplementation"(modImplementation(fabricApi.module("fabric-networking-api-v1", fabricApiVersion))!!)
 
     // API dependencies
     fabricBootstrapLibrariesConfig(apiLibs.pluginSpi) {

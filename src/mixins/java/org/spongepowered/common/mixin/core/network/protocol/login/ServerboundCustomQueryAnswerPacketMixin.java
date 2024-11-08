@@ -27,19 +27,40 @@ package org.spongepowered.common.mixin.core.network.protocol.login;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.login.ServerboundCustomQueryAnswerPacket;
 import net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.common.network.channel.SpongeChannelAnswerPayload;
 
-@Mixin(ServerboundCustomQueryAnswerPacket.class)
+// Loofah : inject into readPayload and take down the priority to make sure we supersede FAPI networking API
+@Mixin(value = ServerboundCustomQueryAnswerPacket.class, priority = 999)
 public abstract class ServerboundCustomQueryAnswerPacketMixin {
+    // Loofah body
+    // @formatter: off
+    @Shadow
+    @Final
+    private static int MAX_PAYLOAD_SIZE;
+    // @formatter: on
 
-    @Inject(method = "readUnknownPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;skipBytes(I)Lnet/minecraft/network/FriendlyByteBuf;"), cancellable = true)
+    @Inject(method = "readPayload", at = @At("HEAD"), cancellable = true)
+    private static void impl$onReadUnknownPayload(int $$0, FriendlyByteBuf $$1, CallbackInfoReturnable<CustomQueryAnswerPayload> cir) {
+        final int readableBytes = $$1.readableBytes();
+        if (readableBytes >= 0 && readableBytes <= ServerboundCustomQueryAnswerPacketMixin.MAX_PAYLOAD_SIZE) {
+            final var payload = $$1.readNullable(buf -> new FriendlyByteBuf(buf.readBytes(buf.readableBytes())));
+            cir.setReturnValue(SpongeChannelAnswerPayload.bufferOnly(payload == null ? null : buf -> buf.writeBytes(payload, payload.readerIndex(), payload.readableBytes())));
+        } else {
+            throw new IllegalArgumentException("Payload may not be larger than " + ServerboundCustomQueryAnswerPacketMixin.MAX_PAYLOAD_SIZE + " bytes");
+        }
+    }
+
+    // Upstream body
+    /*@Inject(method = "readUnknownPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;skipBytes(I)Lnet/minecraft/network/FriendlyByteBuf;"), cancellable = true)
     private static void impl$onReadUnknownPayload(final FriendlyByteBuf $$0, final CallbackInfoReturnable<CustomQueryAnswerPayload> cir) {
         final var payload = $$0.readNullable(buf -> new FriendlyByteBuf(buf.readBytes(buf.readableBytes())));
 
         cir.setReturnValue(SpongeChannelAnswerPayload.bufferOnly(payload == null ? null : buf -> buf.writeBytes(payload, payload.readerIndex(), payload.readableBytes())));
-    }
+    }*/
 }
