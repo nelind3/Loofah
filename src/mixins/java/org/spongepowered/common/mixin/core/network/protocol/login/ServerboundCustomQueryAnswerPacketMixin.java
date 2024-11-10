@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.core.network.protocol.login;
 
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.login.ServerboundCustomQueryAnswerPacket;
 import net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload;
@@ -49,8 +50,10 @@ public abstract class ServerboundCustomQueryAnswerPacketMixin {
     private static void impl$onReadUnknownPayload(int $$0, FriendlyByteBuf $$1, CallbackInfoReturnable<CustomQueryAnswerPayload> cir) {
         final int readableBytes = $$1.readableBytes();
         if (readableBytes >= 0 && readableBytes <= ServerboundCustomQueryAnswerPacketMixin.MAX_PAYLOAD_SIZE) {
+            // Get the "original buffer" in the same style as FAPI for later use by FAPI
+            final var originalBuf = new FriendlyByteBuf(Unpooled.buffer()).writeBytes($$1.copy());
             final var payload = $$1.readNullable(buf -> new FriendlyByteBuf(buf.readBytes(buf.readableBytes())));
-            cir.setReturnValue(SpongeChannelAnswerPayload.bufferOnly(payload == null ? null : buf -> buf.writeBytes(payload, payload.readerIndex(), payload.readableBytes())));
+            cir.setReturnValue(SpongeChannelAnswerPayload.bufferOnly(payload == null ? null : buf -> buf.writeBytes(payload, payload.readerIndex(), payload.readableBytes()), originalBuf));
         } else {
             throw new IllegalArgumentException("Payload may not be larger than " + ServerboundCustomQueryAnswerPacketMixin.MAX_PAYLOAD_SIZE + " bytes");
         }

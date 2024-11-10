@@ -24,7 +24,6 @@
  */
 package dk.nelind.loofah.mixin.core.fabricmc.fabric.impl.networking.server;
 
-import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.impl.networking.server.ServerLoginNetworkAddon;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.login.ServerboundCustomQueryAnswerPacket;
@@ -47,18 +46,6 @@ public abstract class ServerLoginNetworkAddonMixin {
     )
     private void useSpongeQueryAnswerPacket(ServerboundCustomQueryAnswerPacket packet, CallbackInfoReturnable<Boolean> cir) {
         SpongeChannelAnswerPayload response = (SpongeChannelAnswerPayload) packet.payload();
-        if (response == null) {
-            cir.setReturnValue(handle(packet.transactionId(), null));
-            return;
-        }
-
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        try {
-            response.write(buf);
-        } catch (NullPointerException e) {
-            cir.setReturnValue(handle(packet.transactionId(), null));
-            return;
-        }
-        cir.setReturnValue(handle(packet.transactionId(), buf));
+        cir.setReturnValue(handle(packet.transactionId(), response == null ? null : response.originalBuf()));
     }
 }

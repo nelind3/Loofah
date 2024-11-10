@@ -32,8 +32,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.function.Consumer;
 
+// TODO(loofah): get the buffer handled in a FAPI style by just saving it directly on the sponge payload
+//  is drifting a bit far from upstream imo. preferable to do something else if possible
 /** Loofah only copy of {@link org.spongepowered.common.network.channel.SpongeChannelPayload} implementing only {@link net.minecraft.network.protocol.login.custom.CustomQueryAnswerPayload} to fix a remapping issue */
-public record SpongeChannelAnswerPayload(@Nullable Type<? extends CustomPacketPayload> type, @Nullable ResourceLocation id, @Nullable Consumer<FriendlyByteBuf> consumer) implements CustomPacketPayload, CustomQueryAnswerPayload {
+public record SpongeChannelAnswerPayload(@Nullable Type<? extends CustomPacketPayload> type, @Nullable ResourceLocation id, @Nullable Consumer<FriendlyByteBuf> consumer, /* Loofah : store a bytebuf handled like FAPI to achieve FAPI compat */ FriendlyByteBuf originalBuf) implements CustomPacketPayload, CustomQueryAnswerPayload {
 
     public void write(final FriendlyByteBuf buf) {
         this.consumer.accept(buf);
@@ -49,7 +51,7 @@ public record SpongeChannelAnswerPayload(@Nullable Type<? extends CustomPacketPa
         return this.id;
     }
 
-    public static SpongeChannelAnswerPayload bufferOnly(@Nullable Consumer<FriendlyByteBuf> consumer) {
-        return new SpongeChannelAnswerPayload(null, null, consumer);
+    public static SpongeChannelAnswerPayload bufferOnly(@Nullable Consumer<FriendlyByteBuf> consumer, FriendlyByteBuf originalBuf) {
+        return new SpongeChannelAnswerPayload(null, null, consumer, originalBuf);
     }
 }
