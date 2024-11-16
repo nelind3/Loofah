@@ -23,11 +23,15 @@
     ],
     "client": [
       "dk.nelind.loofah.Loofah"
+    ],
+    "mixinsquared-adjuster": [
+      "dk.nelind.loofah.mixin.plugin.FabricMixinAnnotationAdjuster"
     ]
   },
   "accessWidener" : "common.accesswidener",
   "mixins": [
     "mixins.loofah.api.json",
+    "mixins.loofah.compat.json",
     "mixins.loofah.core.json",
     "mixins.loofah.core.shared.json",
     "mixins.loofah.inventory.json",

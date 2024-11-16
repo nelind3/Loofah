@@ -24,18 +24,27 @@
  */
 package dk.nelind.loofah.mixin.plugin;
 
-import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.spongepowered.common.mixin.plugin.AbstractMixinConfigPlugin;
+import com.bawnorton.mixinsquared.adjuster.tools.AdjustableAnnotationNode;
+import com.bawnorton.mixinsquared.api.MixinAnnotationAdjuster;
+import org.objectweb.asm.tree.MethodNode;
+import org.spongepowered.asm.mixin.injection.Inject;
 
-/**
- * Inspired by {@link org.spongepowered.forge.mixin.plugin.ForgeCorePlugin}
- */
-public class FabricMixinPlugin extends AbstractMixinConfigPlugin {
-    public static final Logger LOGGER = LogManager.getLogger("Loofah/Mixin");
+import java.util.List;
 
-    public FabricMixinPlugin() {
-        FabricPluginPlatform.bootstrap();
+public class FabricMixinAnnotationAdjuster implements MixinAnnotationAdjuster {
+    @Override
+    public AdjustableAnnotationNode adjust(List<String> targetClassNames, String mixinClassName, MethodNode handlerNode, AdjustableAnnotationNode annotationNode) {
+        // Don't inject Architectury's MixinExplosion inject as the priorities are in the wrong order
+        // and even if they were in the right order the LVT has been changed by an overwrite in
+        // SpongeCommon ExplosionMixin and the local capture would fail. Not the pretties thing ever but
+        // sometimes modding is just inherently ugly. If some other better solution presents itself at some point
+        // that is mostly likely preferable
+        //
+        // See also dk.nelind.loofah.mixin.compat.world.level.ExplosionMixin
+        if (mixinClassName.equals("dev.architectury.mixin.fabric.MixinExplosion") && annotationNode.is(Inject.class)) {
+            return null;
+        }
+
+        return annotationNode;
     }
 }

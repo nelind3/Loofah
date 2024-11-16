@@ -24,18 +24,21 @@
  */
 package dk.nelind.loofah.mixin.plugin;
 
-import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.fabricmc.loader.api.FabricLoader;
 import org.spongepowered.common.mixin.plugin.AbstractMixinConfigPlugin;
 
-/**
- * Inspired by {@link org.spongepowered.forge.mixin.plugin.ForgeCorePlugin}
- */
-public class FabricMixinPlugin extends AbstractMixinConfigPlugin {
-    public static final Logger LOGGER = LogManager.getLogger("Loofah/Mixin");
+public class FabricCompatMixinPlugin extends AbstractMixinConfigPlugin {
+    @Override
+    public boolean shouldApplyMixin(final String targetClassName, final String mixinClassName) {
 
-    public FabricMixinPlugin() {
-        FabricPluginPlatform.bootstrap();
+        if (
+            mixinClassName.equals("dk.nelind.loofah.mixin.compat.architectury.world.level.ExplosionMixin") &&
+            FabricLoader.getInstance().isModLoaded("architectury")
+        ) {
+            FabricMixinPlugin.LOGGER.info("Architectury API detected. Enabling compatibility features in Loofah");
+            return true;
+        }
+
+        return false;
     }
 }

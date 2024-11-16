@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "parent": "mixins.sponge.parent.json",
+  "package": "dk.nelind.loofah.mixin.compat",
+  "plugin": "dk.nelind.loofah.mixin.plugin.FabricCompatMixinPlugin",
+  "mixinPriority": 1301,
+  "mixins": [
+    "architectury.world.level.ExplosionMixin"
+  ],
+  "overwrites": {
+    "conformVisibility": true
+  }
+}

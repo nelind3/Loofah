@@ -13,6 +13,9 @@ repositories {
     maven("https://repo.spongepowered.org/repository/maven-public/") {
         name = "SpongePowered"
     }
+    maven("https://maven.bawnorton.com/releases") {
+        name = "Bawnorton"
+    }
 }
 
 plugins {
@@ -184,6 +187,8 @@ dependencies {
     // Mod dependencies
     modImplementation(fabricApi.module("fabric-lifecycle-events-v1", fabricApiVersion))
     "modMixinsImplementation"(modImplementation(fabricApi.module("fabric-networking-api-v1", fabricApiVersion))!!)
+
+    include(fabricLibrariesConfig(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0")!!)!!)
 
     // API dependencies
     fabricBootstrapLibrariesConfig(apiLibs.pluginSpi) {
