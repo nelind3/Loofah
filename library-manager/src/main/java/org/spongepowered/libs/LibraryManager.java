@@ -32,12 +32,19 @@ import org.spongepowered.libs.model.SonatypeResponse;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -84,7 +91,7 @@ public final class LibraryManager {
     }
 
     public void addLibrary(final String set, final Library library) {
-        this.libraries.computeIfAbsent(set, $ -> Collections.synchronizedSet(new LinkedHashSet<>())).add(library);
+        this.libraries.computeIfAbsent(set, key -> Collections.synchronizedSet(new LinkedHashSet<>())).add(library);
     }
 
     public void validate() throws Exception {
@@ -99,8 +106,8 @@ public final class LibraryManager {
         final Map<String, CompletableFuture<Path>> operations = new HashMap<>();
         final Set<String> failures = ConcurrentHashMap.newKeySet();
 
-        for (final Map.Entry<String, List<Libraries.Dependency>> setEntry : dependencies.dependencies.entrySet()) {
-            downloadedDeps.put(setEntry.getKey(), this.scheduleDownloads(setEntry.getKey(), setEntry.getValue(), operations, failures));
+        for (final Map.Entry<String, List<Libraries.Dependency>> entry : dependencies.dependencies().entrySet()) {
+            downloadedDeps.put(entry.getKey(), this.scheduleDownloads(entry.getValue(), operations, failures));
         }
 
         CompletableFuture.allOf(operations.values().toArray(new CompletableFuture<?>[0])).handle((result, err) -> {
@@ -123,20 +130,17 @@ public final class LibraryManager {
     }
 
     private Set<Library> scheduleDownloads(
-        final String collection,
         final List<Libraries.Dependency> dependencies,
         final Map<String, CompletableFuture<Path>> operations,
         final Set<String> failures
     ) {
         final Set<Library> downloadedDeps = Collections.synchronizedSet(new LinkedHashSet<>(dependencies.size()));
-        for (final Libraries.Dependency dependency : dependencies) {
-            operations.computeIfAbsent(asId(dependency), $ -> AsyncUtils.asyncFailableFuture(() -> {
-                final String groupPath = dependency.group.replace(".", "/");
-                final Path depDirectory =
-                    this.rootDirectory.resolve(groupPath).resolve(dependency.module).resolve(dependency.version);
+        for (final Libraries.Dependency dep : dependencies) {
+            operations.computeIfAbsent(getId(dep), key -> LibraryUtils.asyncFailableFuture(() -> {
+                final String groupPath = dep.group().replace(".", "/");
+                final Path depDirectory = this.rootDirectory.resolve(groupPath).resolve(dep.module()).resolve(dep.version());
                 Files.createDirectories(depDirectory);
-                final Path depFile = depDirectory.resolve(dependency.module + "-" + dependency.version + ".jar");
-                final MessageDigest md5 = MessageDigest.getInstance("MD5");
+                final Path depFile = depDirectory.resolve(dep.module() + "-" + dep.version() + ".jar");
 
                 final boolean checkHashes = this.checkLibraryHashes;
 
@@ -146,64 +150,42 @@ public final class LibraryManager {
                         return depFile;
                     }
 
-                    // Pipe the download stream into the file and compute the SHA-1
-                    final byte[] bytes = Files.readAllBytes(depFile);
-                    final String fileMd5 = InstallerUtils.toHexString(md5.digest(bytes));
-
-                    if (dependency.md5.equals(fileMd5)) {
+                    if (LibraryUtils.validateDigest("MD5", dep.md5(), depFile)) {
                         this.logger.debug("'{}' verified!", depFile);
-                    } else {
-                        this.logger.error("Checksum verification failed: Expected {}, {}. Deleting cached '{}'...",
-                            dependency.md5, fileMd5, depFile);
-                        Files.delete(depFile);
-
-                        final SonatypeResponse response = this.getResponseFor(this.gson, dependency);
-
-                        if (response.items.isEmpty()) {
-                            failures.add("No data received from '" + new URL(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
-                                dependency.md5, dependency.group,
-                                dependency.module, dependency.version)) + "'!");
-                            return null;
-                        }
-                        final SonatypeResponse.Item item = response.items.get(0);
-                        final URL url = item.downloadUrl;
-
-                        InstallerUtils.downloadCheckHash(this.logger, url, depFile, md5, item.checksum.md5);
+                        return depFile;
                     }
+
+                    this.logger.error("Checksum verification failed: Expected {}. Deleting cached '{}'...", dep.md5(), depFile);
+                    Files.delete(depFile);
+                }
+
+                final URL requestUrl = URI.create(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
+                    dep.md5(), dep.group(), dep.module(), dep.version())).toURL();
+                final SonatypeResponse response = this.getResponseFor(this.gson, requestUrl);
+                if (response.items().isEmpty()) {
+                    failures.add("No data received from '" + requestUrl + "'!");
+                    return null;
+                }
+
+                final SonatypeResponse.Item item = response.items().get(0);
+
+                if (checkHashes) {
+                    LibraryUtils.downloadAndVerifyDigest(this.logger, item.downloadUrl(), depFile, "MD5", item.checksum().md5());
                 } else {
-                    final SonatypeResponse response = this.getResponseFor(this.gson, dependency);
-
-                    if (response.items.isEmpty()) {
-                        failures.add("No data received from '" + new URL(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
-                            dependency.md5, dependency.group,
-                            dependency.module, dependency.version)) + "'!");
-                        return null;
-                    }
-
-                    final SonatypeResponse.Item item = response.items.get(0);
-                    final URL url = item.downloadUrl;
-
-                    if (checkHashes) {
-                        InstallerUtils.downloadCheckHash(this.logger, url, depFile, md5, item.checksum.md5);
-                    } else {
-                        InstallerUtils.download(this.logger, url, depFile, true);
-                    }
+                    LibraryUtils.download(this.logger, item.downloadUrl(), depFile, true);
                 }
 
                 return depFile;
             }, this.preparationWorker)).whenComplete((res, err) -> {
                 if (res != null) {
-                    downloadedDeps.add(new Library(asId(dependency), res));
+                    downloadedDeps.add(new Library(getId(dep), res));
                 }
             });
         }
         return downloadedDeps;
     }
 
-    private SonatypeResponse getResponseFor(final Gson gson, final Libraries.Dependency dependency) throws IOException {
-        final URL requestUrl = new URL(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL, dependency.md5, dependency.group,
-            dependency.module, dependency.version));
-
+    private SonatypeResponse getResponseFor(final Gson gson, final URL requestUrl) throws IOException {
         final HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Content-Type", "application/json");
@@ -241,7 +223,7 @@ public final class LibraryManager {
 
     public record Library(String name, Path file) {}
 
-    private static String asId(final Libraries.Dependency dep) {
-        return dep.group + ':' + dep.module + ':' + dep.version;
+    private static String getId(final Libraries.Dependency dep) {
+        return dep.group() + ':' + dep.module() + ':' + dep.version();
     }
 }

@@ -31,9 +31,8 @@ import net.minecraftforge.fart.api.SignatureStripperConfig;
 import net.minecraftforge.fart.api.SourceFixerConfig;
 import net.minecraftforge.fart.api.Transformer;
 import net.minecraftforge.srgutils.IMappingFile;
-import org.spongepowered.libs.AsyncUtils;
-import org.spongepowered.libs.InstallerUtils;
 import org.spongepowered.libs.LibraryManager;
+import org.spongepowered.libs.LibraryUtils;
 import org.spongepowered.vanilla.installer.library.TinyLogger;
 import org.spongepowered.vanilla.installer.model.GroupArtifactVersion;
 import org.spongepowered.vanilla.installer.model.mojang.BundleElement;
@@ -46,6 +45,7 @@ import org.tinylog.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -58,7 +58,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,10 +66,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -113,7 +112,7 @@ public final class InstallerMain {
             this.installer.getLibraryManager().validate();
         }
 
-        final var libraryManager = this.installer.getLibraryManager();
+        final LibraryManager libraryManager = this.installer.getLibraryManager();
         try {
             if (mcVersion != null) {
                 final CompletableFuture<Path> mappingsFuture = this.downloadMappings(mcVersion, LauncherCommandLine.librariesDirectory);
@@ -122,9 +121,9 @@ public final class InstallerMain {
                     .thenApplyAsync(bundle -> this.extractBundle(bundle, LauncherCommandLine.librariesDirectory), libraryManager.preparationWorker());
                 final CompletableFuture<ServerAndLibraries> remappedMinecraftJarFuture = mappingsFuture.thenCombineAsync(extractedFuture, (mappings, minecraft) -> {
                     try {
-                        return this.remapMinecraft(minecraft, mappings, this.installer.getLibraryManager().preparationWorker());
+                        return this.remapMinecraft(minecraft, mappings);
                     } catch (final IOException ex) {
-                        return AsyncUtils.sneakyThrow(ex);
+                        throw new UncheckedIOException(ex);
                     }
                 }, libraryManager.preparationWorker());
                 libraryManager.validate();
@@ -252,8 +251,7 @@ public final class InstallerMain {
         VersionManifest.Version foundVersionManifest = null;
 
         final Gson gson = new Gson();
-        final URLConnection conn = new URL(Constants.Libraries.MINECRAFT_MANIFEST_URL)
-            .openConnection();
+        final URLConnection conn = new URL(Constants.Libraries.MINECRAFT_MANIFEST_URL).openConnection();
         conn.setConnectTimeout(5 /* seconds */ * 1000);
         try (final JsonReader reader = new JsonReader(new InputStreamReader(conn.getInputStream()))) {
             final VersionManifest manifest = gson.fromJson(reader, VersionManifest.class);
@@ -298,29 +296,25 @@ public final class InstallerMain {
     }
 
     private CompletableFuture<Path> downloadMinecraft(final Version version, final Path librariesDirectory) {
-        return AsyncUtils.asyncFailableFuture(() -> {
+        return LibraryUtils.asyncFailableFuture(() -> {
             final Path downloadTarget = this.expectedBundleLocation(this.expectedMinecraftLocation(librariesDirectory, version.id));
 
             if (Files.notExists(downloadTarget)) {
                 if (!this.installer.getLauncherConfig().autoDownloadLibraries) {
-                    throw new IOException(
-                            String.format("The Minecraft jar is not located at '%s' and downloading it has been turned off.", downloadTarget));
+                    throw new IOException(String.format("The Minecraft jar is not located at '%s' and downloading it has been turned off.", downloadTarget));
                 }
-                InstallerUtils.downloadCheckHash(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget,
-                    MessageDigest.getInstance("SHA-1"), version.downloads.server.sha1);
+                LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget, "SHA-1", version.downloads.server.sha1);
             } else {
                 if (this.installer.getLauncherConfig().checkLibraryHashes) {
                     Logger.info("Detected existing Minecraft Server jar, verifying hashes...");
 
                     // Pipe the download stream into the file and compute the SHA-1
-                    if (InstallerUtils.validateSha1(version.downloads.server.sha1, downloadTarget)) {
+                    if (LibraryUtils.validateDigest("SHA-1", version.downloads.server.sha1, downloadTarget)) {
                         Logger.info("Minecraft Server jar verified!");
                     } else {
-                        Logger.error("Checksum verification failed: Expected {}. Deleting cached Minecraft Server jar...",
-                                version.downloads.server.sha1);
+                        Logger.error("Checksum verification failed: Expected {}. Deleting cached Minecraft Server jar...", version.downloads.server.sha1);
                         Files.delete(downloadTarget);
-                        InstallerUtils.downloadCheckHash(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget,
-                            MessageDigest.getInstance("SHA-1"), version.downloads.server.sha1);
+                        LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget, "SHA-1", version.downloads.server.sha1);
                     }
                 } else {
                     Logger.info("Detected existing Minecraft jar. Skipping hash check as that is turned off...");
@@ -333,8 +327,8 @@ public final class InstallerMain {
     private ServerAndLibraries extractBundle(final Path bundleJar, final Path librariesDirectory) {
         final Path serverDestination = this.expectedMinecraftLocation(librariesDirectory, Constants.Libraries.MINECRAFT_VERSION_TARGET);
         try (final JarFile bundle = new JarFile(bundleJar.toFile())) {
-            final var metaOpt = BundlerMetadata.read(bundle);
-            if (!metaOpt.isPresent()) {
+            final Optional<BundlerMetadata> metaOpt = BundlerMetadata.read(bundle);
+            if (metaOpt.isEmpty()) {
                 return new ServerAndLibraries(bundleJar, Map.of());
             }
             final BundlerMetadata md = metaOpt.get();
@@ -347,15 +341,15 @@ public final class InstallerMain {
             boolean serverExtractionNeeded = true;
             final BundleElement server = md.server();
             if (Files.exists(serverDestination)) {
-                if (InstallerUtils.validateSha256(server.sha256(), serverDestination)) {
+                if (LibraryUtils.validateDigest("SHA-256", server.sha256(), serverDestination)) {
                     // library is valid
                     serverExtractionNeeded = false;
                 }
             }
             if (serverExtractionNeeded) {
                 final ZipEntry serverEntry = bundle.getEntry(server.path());
-                try (final InputStream is = bundle.getInputStream(serverEntry)) {
-                    InstallerUtils.transferCheckHash(TinyLogger.INSTANCE, is, serverDestination, MessageDigest.getInstance("SHA-256"), server.sha256());
+                try (final InputStream in = bundle.getInputStream(serverEntry)) {
+                    LibraryUtils.transferAndVerifyDigest(TinyLogger.INSTANCE, in, serverDestination, "SHA-256", server.sha256());
                 }
             }
 
@@ -366,7 +360,7 @@ public final class InstallerMain {
                 final Path destination = gav.resolve(librariesDirectory).resolve(gav.artifact() + '-' + gav.version() + (gav.classifier() == null ? "" : '-' + gav.classifier()) +".jar");
 
                 if (Files.exists(destination)) {
-                    if (InstallerUtils.validateSha256(library.sha256(), destination)) {
+                    if (LibraryUtils.validateDigest("SHA-256", library.sha256(), destination)) {
                        // library is valid
                        libs.put(gav, destination);
                        continue;
@@ -374,8 +368,8 @@ public final class InstallerMain {
                 }
 
                 final ZipEntry entry = bundle.getEntry(library.path());
-                try (final InputStream is = bundle.getInputStream(entry)) {
-                    InstallerUtils.transferCheckHash(TinyLogger.INSTANCE, is, destination, MessageDigest.getInstance("SHA-256"), library.sha256());
+                try (final InputStream in = bundle.getInputStream(entry)) {
+                    LibraryUtils.transferAndVerifyDigest(TinyLogger.INSTANCE, in, destination, "SHA-256", library.sha256());
                     libs.put(gav, destination);
                 }
             }
@@ -388,7 +382,7 @@ public final class InstallerMain {
     }
 
     private CompletableFuture<Path> downloadMappings(final Version version, final Path librariesDirectory) {
-        return AsyncUtils.asyncFailableFuture(() -> {
+        return LibraryUtils.asyncFailableFuture(() -> {
             Logger.info("Setting up names for Minecraft {}", Constants.Libraries.MINECRAFT_VERSION_TARGET);
             final Path downloadTarget = librariesDirectory.resolve(Constants.Libraries.MINECRAFT_MAPPINGS_PREFIX)
                     .resolve(Constants.Libraries.MINECRAFT_VERSION_TARGET)
@@ -403,7 +397,7 @@ public final class InstallerMain {
             if (Files.exists(downloadTarget)) {
                 if (checkHashes) {
                     Logger.info("Detected existing mappings, verifying hashes...");
-                    if (InstallerUtils.validateSha1(mappings.sha1, downloadTarget)) {
+                    if (LibraryUtils.validateDigest("SHA-1", mappings.sha1, downloadTarget)) {
                         Logger.info("Mappings verified!");
                         return downloadTarget;
                     } else {
@@ -418,10 +412,9 @@ public final class InstallerMain {
 
             if (this.installer.getLauncherConfig().autoDownloadLibraries) {
                 if (checkHashes) {
-                    InstallerUtils.downloadCheckHash(TinyLogger.INSTANCE, mappings.url, downloadTarget,
-                        MessageDigest.getInstance("SHA-1"), mappings.sha1);
+                    LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, mappings.url, downloadTarget, "SHA-1", mappings.sha1);
                 } else {
-                    InstallerUtils.download(TinyLogger.INSTANCE, mappings.url, downloadTarget, false);
+                    LibraryUtils.download(TinyLogger.INSTANCE, mappings.url, downloadTarget, false);
                 }
             } else {
                 throw new IOException(String.format("Mappings were not located at '%s' and downloading them has been turned off.", downloadTarget));
@@ -431,7 +424,7 @@ public final class InstallerMain {
         }, this.installer.getLibraryManager().preparationWorker());
     }
 
-    private ServerAndLibraries remapMinecraft(final ServerAndLibraries minecraft, final Path serverMappings, final ExecutorService service) throws IOException {
+    private ServerAndLibraries remapMinecraft(final ServerAndLibraries minecraft, final Path serverMappings) throws IOException {
         Logger.info("Checking if we need to remap Minecraft...");
         final Path outputJar = this.expectedRemappedLocation(minecraft.server());
         final Path tempOutput = outputJar.resolveSibling(Constants.Libraries.MINECRAFT_SERVER_JAR_NAME + "_remapped.jar.tmp");

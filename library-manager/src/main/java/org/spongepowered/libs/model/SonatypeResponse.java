@@ -27,20 +27,7 @@ package org.spongepowered.libs.model;
 import java.net.URL;
 import java.util.List;
 
-public final class SonatypeResponse {
-
-    public List<Item> items;
-    public String continuationToken;
-
-    public static final class Item {
-
-        public URL downloadUrl;
-        public String path, id, repository, format;
-        public Checksum checksum;
-    }
-
-    public static final class Checksum {
-
-        public String sha1, md5;
-    }
+public record SonatypeResponse(List<Item> items, String continuationToken) {
+    public record Item(URL downloadUrl, String path, String id, String repository, String format, Checksum checksum) {}
+    public record Checksum(String md5, String sha1, String sha256) {}
 }
