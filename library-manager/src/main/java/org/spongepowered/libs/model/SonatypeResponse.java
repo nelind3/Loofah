@@ -22,36 +22,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.vanilla.installer.model.sponge;
+package org.spongepowered.libs.model;
 
+import java.net.URL;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-public final class Libraries {
+public final class SonatypeResponse {
 
-    public Map<String, List<Dependency>> dependencies;
+    public List<Item> items;
+    public String continuationToken;
 
-    public static final class Dependency {
+    public static final class Item {
 
-        public String group, module, version, md5;
+        public URL downloadUrl;
+        public String path, id, repository, format;
+        public Checksum checksum;
+    }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.group, this.module);
-        }
+    public static final class Checksum {
 
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || this.getClass() != o.getClass()) {
-                return false;
-            }
-            final Dependency that = (Dependency) o;
-            return this.group.equals(that.group) &&
-                this.module.equals(that.module);
-        }
+        public String sha1, md5;
     }
 }

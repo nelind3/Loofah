@@ -22,14 +22,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.forge.applaunch.loading.moddiscovery.library;
+package org.spongepowered.libs;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.spongepowered.forge.applaunch.loading.moddiscovery.library.model.sponge.Libraries;
-import org.spongepowered.forge.applaunch.loading.moddiscovery.library.model.sponge.SonatypeResponse;
+import org.spongepowered.libs.model.Libraries;
+import org.spongepowered.libs.model.SonatypeResponse;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -39,13 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -53,20 +45,20 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-// copied from SV
 public final class LibraryManager {
-
     public static final String SPONGE_NEXUS_DOWNLOAD_URL = "https://repo.spongepowered.org/service/rest/v1/search/assets?md5=%s&maven"
         + ".groupId=%s&maven.artifactId=%s&maven.baseVersion=%s&maven.extension=jar";
-    private static final Logger LOGGER = LogManager.getLogger();
 
+    private final Logger logger;
     private final boolean checkLibraryHashes;
     private final Path rootDirectory;
     private final URL librariesUrl;
-    private final Map<String, Library> libraries;
+    private final Map<String, Set<Library>> libraries;
     private final ExecutorService preparationWorker;
+    private final Gson gson;
 
-    public LibraryManager(final boolean checkLibraryHashes, final Path rootDirectory, final URL librariesUrl) {
+    public LibraryManager(final Logger logger, final boolean checkLibraryHashes, final Path rootDirectory, final URL librariesUrl) {
+        this.logger = Objects.requireNonNull(logger, "logger");
         this.checkLibraryHashes = checkLibraryHashes;
         this.rootDirectory = Objects.requireNonNull(rootDirectory, "rootDirectory");
         this.librariesUrl = Objects.requireNonNull(librariesUrl, "librariesUrl");
@@ -80,36 +72,65 @@ public final class LibraryManager {
             60L, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>() // this is the number of tasks allowed to be waiting before the pool will spawn off a new thread (unbounded)
         );
+        this.gson = new Gson();
     }
 
     public Path getRootDirectory() {
         return this.rootDirectory;
     }
 
-    public Map<String, Library> getAll() {
-        return Collections.unmodifiableMap(this.libraries);
+    public Set<Library> getAll(final String collection) {
+        return Collections.unmodifiableSet(this.libraries.getOrDefault(collection, Collections.emptySet()));
     }
 
-    protected void addLibrary(final Library library) {
-        this.libraries.put(library.getName(), library);
+    public void addLibrary(final String set, final Library library) {
+        this.libraries.computeIfAbsent(set, $ -> Collections.synchronizedSet(new LinkedHashSet<>())).add(library);
     }
 
     public void validate() throws Exception {
-        LibraryManager.LOGGER.info("Scanning and verifying libraries in '{}'. Please wait, this may take a moment...", this.rootDirectory);
-
-        final Gson gson = new Gson();
+        this.logger.info("Scanning and verifying libraries in '{}'. Please wait, this may take a moment...", this.rootDirectory);
 
         final Libraries dependencies;
         try (final JsonReader reader = new JsonReader(new InputStreamReader(this.librariesUrl.openStream(), StandardCharsets.UTF_8))) {
-            dependencies = gson.fromJson(reader, Libraries.class);
+            dependencies = this.gson.fromJson(reader, Libraries.class);
         }
 
-        final Set<Library> downloadedDeps = ConcurrentHashMap.newKeySet();
-        final List<CompletableFuture<?>> operations = new ArrayList<>(dependencies.dependencies.size());
+        final Map<String, Set<Library>> downloadedDeps = new HashMap<>();
+        final Map<String, CompletableFuture<Path>> operations = new HashMap<>();
         final Set<String> failures = ConcurrentHashMap.newKeySet();
 
-        for (final Libraries.Dependency dependency : dependencies.dependencies.get("main")) { // todo: evaluate dep sections for forge
-            operations.add(AsyncUtils.asyncFailableFuture(() -> {
+        for (final Map.Entry<String, List<Libraries.Dependency>> setEntry : dependencies.dependencies.entrySet()) {
+            downloadedDeps.put(setEntry.getKey(), this.scheduleDownloads(setEntry.getKey(), setEntry.getValue(), operations, failures));
+        }
+
+        CompletableFuture.allOf(operations.values().toArray(new CompletableFuture<?>[0])).handle((result, err) -> {
+            if (err != null) {
+                failures.add(err.getMessage());
+                this.logger.error("Failed to download library", err);
+            }
+            return result;
+        }).join();
+
+        if (!failures.isEmpty()) {
+            this.logger.error("Failed to download some libraries:");
+            for (final String message : failures) {
+                this.logger.error(message);
+            }
+            System.exit(-1);
+        }
+
+        this.libraries.putAll(downloadedDeps);
+    }
+
+    private Set<Library> scheduleDownloads(
+        final String collection,
+        final List<Libraries.Dependency> dependencies,
+        final Map<String, CompletableFuture<Path>> operations,
+        final Set<String> failures
+    ) {
+        final Set<Library> downloadedDeps = Collections.synchronizedSet(new LinkedHashSet<>(dependencies.size()));
+        for (final Libraries.Dependency dependency : dependencies) {
+            operations.computeIfAbsent(asId(dependency), $ -> AsyncUtils.asyncFailableFuture(() -> {
                 final String groupPath = dependency.group.replace(".", "/");
                 final Path depDirectory =
                     this.rootDirectory.resolve(groupPath).resolve(dependency.module).resolve(dependency.version);
@@ -121,9 +142,8 @@ public final class LibraryManager {
 
                 if (Files.exists(depFile)) {
                     if (!checkHashes) {
-                        LibraryManager.LOGGER.info("Detected existing '{}', skipping hash checks...", depFile);
-                        downloadedDeps.add(new Library(dependency.group + "-" + dependency.module, depFile));
-                        return null;
+                        this.logger.info("Detected existing '{}', skipping hash checks...", depFile);
+                        return depFile;
                     }
 
                     // Pipe the download stream into the file and compute the SHA-1
@@ -131,13 +151,13 @@ public final class LibraryManager {
                     final String fileMd5 = InstallerUtils.toHexString(md5.digest(bytes));
 
                     if (dependency.md5.equals(fileMd5)) {
-                        LibraryManager.LOGGER.debug("'{}' verified!", depFile);
+                        this.logger.debug("'{}' verified!", depFile);
                     } else {
-                        LibraryManager.LOGGER.error("Checksum verification failed: Expected {}, {}. Deleting cached '{}'...",
+                        this.logger.error("Checksum verification failed: Expected {}, {}. Deleting cached '{}'...",
                             dependency.md5, fileMd5, depFile);
                         Files.delete(depFile);
 
-                        final SonatypeResponse response = this.getResponseFor(gson, dependency);
+                        final SonatypeResponse response = this.getResponseFor(this.gson, dependency);
 
                         if (response.items.isEmpty()) {
                             failures.add("No data received from '" + new URL(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
@@ -148,10 +168,10 @@ public final class LibraryManager {
                         final SonatypeResponse.Item item = response.items.get(0);
                         final URL url = item.downloadUrl;
 
-                        InstallerUtils.downloadCheckHash(url, depFile, md5, item.checksum.md5, true);
+                        InstallerUtils.downloadCheckHash(this.logger, url, depFile, md5, item.checksum.md5);
                     }
                 } else {
-                    final SonatypeResponse response = this.getResponseFor(gson, dependency);
+                    final SonatypeResponse response = this.getResponseFor(this.gson, dependency);
 
                     if (response.items.isEmpty()) {
                         failures.add("No data received from '" + new URL(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
@@ -164,37 +184,20 @@ public final class LibraryManager {
                     final URL url = item.downloadUrl;
 
                     if (checkHashes) {
-                        InstallerUtils.downloadCheckHash(url, depFile, md5, item.checksum.md5, true);
+                        InstallerUtils.downloadCheckHash(this.logger, url, depFile, md5, item.checksum.md5);
                     } else {
-                        InstallerUtils.download(url, depFile, true);
+                        InstallerUtils.download(this.logger, url, depFile, true);
                     }
                 }
 
-                downloadedDeps.add(new Library(dependency.group + "-" + dependency.module, depFile));
-                return null;
-            }, this.preparationWorker));
+                return depFile;
+            }, this.preparationWorker)).whenComplete((res, err) -> {
+                if (res != null) {
+                    downloadedDeps.add(new Library(asId(dependency), res));
+                }
+            });
         }
-
-
-        CompletableFuture.allOf(operations.toArray(new CompletableFuture<?>[0])).handle((result, err) -> {
-            if (err != null) {
-                failures.add(err.getMessage());
-                LibraryManager.LOGGER.error("Failed to download library", err);
-            }
-            return result;
-        }).join();
-
-        if (!failures.isEmpty()) {
-            LibraryManager.LOGGER.error("Failed to download some libraries:");
-            for (final String message : failures) {
-                LibraryManager.LOGGER.error(message);
-            }
-            System.exit(-1);
-        }
-
-        for (final Library library : downloadedDeps) {
-            this.libraries.put(library.getName(), library);
-        }
+        return downloadedDeps;
     }
 
     private SonatypeResponse getResponseFor(final Gson gson, final Libraries.Dependency dependency) throws IOException {
@@ -231,27 +234,14 @@ public final class LibraryManager {
         }
 
         if (!successful) {
-            LibraryManager.LOGGER.warn("Failed to shut down library preparation pool in 10 seconds, forcing shutdown now.");
+            this.logger.warn("Failed to shut down library preparation pool in 10 seconds, forcing shutdown now.");
             this.preparationWorker.shutdownNow();
         }
     }
 
-    public static class Library {
+    public record Library(String name, Path file) {}
 
-        private final String name;
-        private final Path file;
-
-        public Library(final String name, final Path file) {
-            this.name = name;
-            this.file = file;
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public Path getFile() {
-            return this.file;
-        }
+    private static String asId(final Libraries.Dependency dep) {
+        return dep.group + ':' + dep.module + ':' + dep.version;
     }
 }

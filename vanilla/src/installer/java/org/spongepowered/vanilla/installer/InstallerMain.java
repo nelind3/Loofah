@@ -31,6 +31,10 @@ import net.minecraftforge.fart.api.SignatureStripperConfig;
 import net.minecraftforge.fart.api.SourceFixerConfig;
 import net.minecraftforge.fart.api.Transformer;
 import net.minecraftforge.srgutils.IMappingFile;
+import org.spongepowered.libs.AsyncUtils;
+import org.spongepowered.libs.InstallerUtils;
+import org.spongepowered.libs.LibraryManager;
+import org.spongepowered.vanilla.installer.library.TinyLogger;
 import org.spongepowered.vanilla.installer.model.GroupArtifactVersion;
 import org.spongepowered.vanilla.installer.model.mojang.BundleElement;
 import org.spongepowered.vanilla.installer.model.mojang.BundlerMetadata;
@@ -302,9 +306,8 @@ public final class InstallerMain {
                     throw new IOException(
                             String.format("The Minecraft jar is not located at '%s' and downloading it has been turned off.", downloadTarget));
                 }
-                InstallerUtils
-                        .downloadCheckHash(version.downloads.server.url, downloadTarget, MessageDigest.getInstance("SHA-1"),
-                                version.downloads.server.sha1);
+                InstallerUtils.downloadCheckHash(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget,
+                    MessageDigest.getInstance("SHA-1"), version.downloads.server.sha1);
             } else {
                 if (this.installer.getLauncherConfig().checkLibraryHashes) {
                     Logger.info("Detected existing Minecraft Server jar, verifying hashes...");
@@ -316,8 +319,8 @@ public final class InstallerMain {
                         Logger.error("Checksum verification failed: Expected {}. Deleting cached Minecraft Server jar...",
                                 version.downloads.server.sha1);
                         Files.delete(downloadTarget);
-                        InstallerUtils.downloadCheckHash(version.downloads.server.url, downloadTarget,
-                                MessageDigest.getInstance("SHA-1"), version.downloads.server.sha1);
+                        InstallerUtils.downloadCheckHash(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget,
+                            MessageDigest.getInstance("SHA-1"), version.downloads.server.sha1);
                     }
                 } else {
                     Logger.info("Detected existing Minecraft jar. Skipping hash check as that is turned off...");
@@ -352,7 +355,7 @@ public final class InstallerMain {
             if (serverExtractionNeeded) {
                 final ZipEntry serverEntry = bundle.getEntry(server.path());
                 try (final InputStream is = bundle.getInputStream(serverEntry)) {
-                    InstallerUtils.transferCheckHash(is, serverDestination, MessageDigest.getInstance("SHA-256"), server.sha256());
+                    InstallerUtils.transferCheckHash(TinyLogger.INSTANCE, is, serverDestination, MessageDigest.getInstance("SHA-256"), server.sha256());
                 }
             }
 
@@ -372,7 +375,7 @@ public final class InstallerMain {
 
                 final ZipEntry entry = bundle.getEntry(library.path());
                 try (final InputStream is = bundle.getInputStream(entry)) {
-                    InstallerUtils.transferCheckHash(is, destination, MessageDigest.getInstance("SHA-256"), library.sha256());
+                    InstallerUtils.transferCheckHash(TinyLogger.INSTANCE, is, destination, MessageDigest.getInstance("SHA-256"), library.sha256());
                     libs.put(gav, destination);
                 }
             }
@@ -415,10 +418,10 @@ public final class InstallerMain {
 
             if (this.installer.getLauncherConfig().autoDownloadLibraries) {
                 if (checkHashes) {
-                    InstallerUtils.downloadCheckHash(mappings.url, downloadTarget,
+                    InstallerUtils.downloadCheckHash(TinyLogger.INSTANCE, mappings.url, downloadTarget,
                         MessageDigest.getInstance("SHA-1"), mappings.sha1);
                 } else {
-                    InstallerUtils.download(mappings.url, downloadTarget, false);
+                    InstallerUtils.download(TinyLogger.INSTANCE, mappings.url, downloadTarget, false);
                 }
             } else {
                 throw new IOException(String.format("Mappings were not located at '%s' and downloading them has been turned off.", downloadTarget));

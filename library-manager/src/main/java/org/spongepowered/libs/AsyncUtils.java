@@ -22,18 +22,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.neoforge.applaunch.loading.moddiscovery.library;
+package org.spongepowered.libs;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-final class AsyncUtils {
+public final class AsyncUtils {
 
     private AsyncUtils() {
     }
 
-    static <T> CompletableFuture<T> asyncFailableFuture(final Callable<T> action, final Executor executor) {
+    public static <T> CompletableFuture<T> asyncFailableFuture(final Callable<T> action, final Executor executor) {
         final CompletableFuture<T> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
@@ -46,7 +46,7 @@ final class AsyncUtils {
     }
 
     @SuppressWarnings("unchecked")
-    static <T extends Throwable, R> R sneakyThrow(final Throwable original) throws T {
+    public static <T extends Throwable, R> R sneakyThrow(final Throwable original) throws T {
         throw (T) original;
     }
 }

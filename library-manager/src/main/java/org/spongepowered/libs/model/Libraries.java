@@ -22,25 +22,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.neoforge.applaunch.loading.moddiscovery.library.model.sponge;
+package org.spongepowered.libs.model;
 
-import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public final class SonatypeResponse {
+public final class Libraries {
 
-    public List<Item> items;
-    public String continuationToken;
+    public Map<String, List<Dependency>> dependencies;
 
-    public static final class Item {
+    public static final class Dependency {
 
-        public URL downloadUrl;
-        public String path, id, repository, format;
-        public Checksum checksum;
-    }
+        public String group, module, version, md5;
 
-    public static final class Checksum {
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.group, this.module);
+        }
 
-        public String sha1, md5;
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || this.getClass() != o.getClass()) {
+                return false;
+            }
+            final Dependency that = (Dependency) o;
+            return this.group.equals(that.group) &&
+                this.module.equals(that.module);
+        }
     }
 }

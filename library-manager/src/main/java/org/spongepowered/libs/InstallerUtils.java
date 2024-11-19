@@ -22,10 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.forge.applaunch.loading.moddiscovery.library;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+package org.spongepowered.libs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,9 +38,8 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-final class InstallerUtils {
+public final class InstallerUtils {
 
-    private static final Logger LOGGER = LogManager.getLogger();
     // From http://stackoverflow.com/questions/9655181/convert-from-byte-array-to-hex-string-in-java
     private static final char[] hexArray = "0123456789abcdef".toCharArray();
 
@@ -51,9 +47,9 @@ final class InstallerUtils {
     }
 
     public static String toHexString(final byte[] bytes) {
-        final char[] hexChars = new char[bytes.length * 2];
+        char[] hexChars = new char[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
-            final int v = bytes[j] & 0xFF;
+            int v = bytes[j] & 0xFF;
             hexChars[j * 2] = InstallerUtils.hexArray[v >>> 4];
             hexChars[j * 2 + 1] = InstallerUtils.hexArray[v & 0x0F];
         }
@@ -84,6 +80,30 @@ final class InstallerUtils {
         return expectedHash.equals(InstallerUtils.toHexString(digest.digest()));
     }
 
+    public static boolean validateSha256(final String expectedHash, final Path path) throws IOException {
+        try (final InputStream is = Files.newInputStream(path)) {
+            return InstallerUtils.validateSha256(expectedHash, is);
+        }
+    }
+
+    public static boolean validateSha256(final String expectedHash, final InputStream stream) throws IOException {
+        final MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (final NoSuchAlgorithmException ex) {
+            throw new AssertionError(ex); // Guaranteed present by MessageDigest spec
+        }
+
+        final byte[] buf = new byte[4096];
+        int read;
+
+        while ((read = stream.read(buf)) != -1) {
+            digest.update(buf,0, read);
+        }
+
+        return expectedHash.equals(InstallerUtils.toHexString(digest.digest()));
+    }
+
     /**
      * Downloads a file.
      *
@@ -91,13 +111,13 @@ final class InstallerUtils {
      * @param path The local path
      * @throws IOException If there is a problem while downloading the file
      */
-    public static void download(final URL url, final Path path, final boolean requiresRequest) throws IOException {
+    public static void download(final Logger logger, final URL url, final Path path, final boolean requiresRequest) throws IOException {
         Files.createDirectories(path.getParent());
 
         final String name = path.getFileName().toString();
 
-        InstallerUtils.LOGGER.info("Downloading {}. This may take a while...", name);
-        InstallerUtils.LOGGER.info("URL -> <{}>", url);
+        logger.info("Downloading {}. This may take a while...", name);
+        logger.debug("URL -> <{}>", url);
 
         if (!requiresRequest) {
             try (final ReadableByteChannel in = Channels.newChannel(url.openStream()); final FileChannel out = FileChannel.open(path,
@@ -127,43 +147,50 @@ final class InstallerUtils {
      * @param expected The SHA-1 expected digest
      * @throws IOException If there is a problem while downloading the file
      */
-    public static void downloadCheckHash(final URL url, final Path path, final MessageDigest digest, final String expected,
-        final boolean requiresRequest) throws IOException {
+    public static void downloadCheckHash(final Logger logger, final URL url, final Path path, final MessageDigest digest, final String expected) throws IOException {
+        final String name = path.getFileName().toString();
+
+        logger.info("Downloading {}. This may take a while...", name);
+        logger.debug("URL -> <{}>", url);
+
+        final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("User-Agent", "Sponge-Downloader");
+
+        connection.connect();
+
+        try (final InputStream is = connection.getInputStream()) {
+            InstallerUtils.transferCheckHash(logger, is, path, digest, expected);
+        }
+    }
+
+    /**
+     * Transfer a file and verify its digest.
+     *
+     * @param source the stream
+     * @param path The local path
+     * @param expected The SHA-1 expected digest
+     * @throws IOException If there is a problem while downloading the file
+     */
+    public static void transferCheckHash(final Logger logger, final InputStream source, final Path path, final MessageDigest digest, final String expected) throws IOException {
         Files.createDirectories(path.getParent());
 
         final String name = path.getFileName().toString();
-
-        InstallerUtils.LOGGER.info("Downloading {}. This may take a while...", name);
-        InstallerUtils.LOGGER.debug("URL -> <{}>", url);
-
-        if (!requiresRequest) {
-            // Pipe the download stream into the file and compute the hash
-            try (final DigestInputStream stream = new DigestInputStream(url.openStream(), digest); final ReadableByteChannel in = Channels
-                .newChannel(stream); final FileChannel out = FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
-                out.transferFrom(in, 0, Long.MAX_VALUE);
-            }
-        } else {
-            final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("User-Agent", "Sponge-Downloader");
-
-            connection.connect();
-
-            // Pipe the download stream into the file and compute the hash
-            try (final DigestInputStream stream = new DigestInputStream(connection.getInputStream(), digest); final ReadableByteChannel in = Channels
-                .newChannel(stream); final FileChannel out = FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
-                out.transferFrom(in, 0, Long.MAX_VALUE);
-            }
+        // Pipe the download stream into the file and compute the hash
+        try (final DigestInputStream stream = new DigestInputStream(source, digest);
+             final ReadableByteChannel in = Channels.newChannel(stream);
+             final FileChannel out = FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            out.transferFrom(in, 0, Long.MAX_VALUE);
         }
 
         final String fileSha1 = InstallerUtils.toHexString(digest.digest());
 
         if (expected.equalsIgnoreCase(fileSha1)) {
-            InstallerUtils.LOGGER.info("Successfully downloaded {} and verified checksum!", name);
+            logger.info("Successfully processed {} and verified checksum!", name);
         } else {
             Files.delete(path);
-            throw new IOException(String.format("Checksum verification failed: Expected '%s', got '%s'.", expected, fileSha1));
+            throw new IOException(String.format("Checksum verification for %s failed: Expected '%s', got '%s'.", name, expected, fileSha1));
         }
     }
 }
