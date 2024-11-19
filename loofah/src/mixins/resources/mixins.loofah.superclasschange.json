@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "parent": "mixins.sponge.parent.json",
+  "package": "dk.nelind.loofah.mixin.superclasschange",
+  "plugin": "dk.nelind.loofah.mixin.plugin.FabricSuperclassChangePlugin",
+  "priority": 1301,
+  "mixins": [
+    "api.entity.ai.goal.AbstractGoalMixin_SuperClassChange"
+  ]
+}
