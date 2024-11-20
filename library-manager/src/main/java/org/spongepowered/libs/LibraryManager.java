@@ -53,8 +53,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public final class LibraryManager {
-    public static final String SPONGE_NEXUS_DOWNLOAD_URL = "https://repo.spongepowered.org/service/rest/v1/search/assets?md5=%s&maven"
-        + ".groupId=%s&maven.artifactId=%s&maven.baseVersion=%s&maven.extension=jar";
+    public static final String SPONGE_NEXUS_DOWNLOAD_URL = "https://repo.spongepowered.org/service/rest/v1/search/assets?sha512=%s"
+        + "&maven.groupId=%s&maven.artifactId=%s&maven.baseVersion=%s&maven.extension=jar";
 
     private final Logger logger;
     private final boolean checkLibraryHashes;
@@ -150,17 +150,17 @@ public final class LibraryManager {
                         return depFile;
                     }
 
-                    if (LibraryUtils.validateDigest("MD5", dep.md5(), depFile)) {
+                    if (LibraryUtils.validateDigest("SHA-512", dep.sha512(), depFile)) {
                         this.logger.debug("'{}' verified!", depFile);
                         return depFile;
                     }
 
-                    this.logger.error("Checksum verification failed: Expected {}. Deleting cached '{}'...", dep.md5(), depFile);
+                    this.logger.error("Checksum verification failed: Expected {}. Deleting cached '{}'...", dep.sha512(), depFile);
                     Files.delete(depFile);
                 }
 
                 final URL requestUrl = URI.create(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
-                    dep.md5(), dep.group(), dep.module(), dep.version())).toURL();
+                    dep.sha512(), dep.group(), dep.module(), dep.version())).toURL();
                 final SonatypeResponse response = this.getResponseFor(this.gson, requestUrl);
                 if (response.items().isEmpty()) {
                     failures.add("No data received from '" + requestUrl + "'!");
@@ -170,7 +170,7 @@ public final class LibraryManager {
                 final SonatypeResponse.Item item = response.items().get(0);
 
                 if (checkHashes) {
-                    LibraryUtils.downloadAndVerifyDigest(this.logger, item.downloadUrl(), depFile, "MD5", item.checksum().md5());
+                    LibraryUtils.downloadAndVerifyDigest(this.logger, item.downloadUrl(), depFile, "SHA-512", item.checksum().sha512());
                 } else {
                     LibraryUtils.download(this.logger, item.downloadUrl(), depFile, true);
                 }

@@ -42,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 public final class LibraryUtils {
-    private static final char[] hexArray = "0123456789abcdef".toCharArray();
+    private static final char[] hexChars = "0123456789abcdef".toCharArray();
 
     private LibraryUtils() {
     }
@@ -59,15 +59,14 @@ public final class LibraryUtils {
         return future;
     }
 
-    // From http://stackoverflow.com/questions/9655181/convert-from-byte-array-to-hex-string-in-java
     public static String toHexString(final byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = LibraryUtils.hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = LibraryUtils.hexArray[v & 0x0F];
+        final char[] chars = new char[bytes.length << 1];
+        int i = 0;
+        for (final byte b : bytes) {
+            chars[i++] = LibraryUtils.hexChars[(b >> 4) & 15];
+            chars[i++] = LibraryUtils.hexChars[b & 15];
         }
-        return new String(hexChars);
+        return new String(chars);
     }
 
     public static boolean validateDigest(final String algorithm, final String expectedHash, final Path path) throws IOException, NoSuchAlgorithmException {
@@ -175,7 +174,7 @@ public final class LibraryUtils {
 
         final String fileDigest = LibraryUtils.toHexString(digest.digest());
 
-        if (expected.equalsIgnoreCase(fileDigest)) {
+        if (expected.equals(fileDigest)) {
             logger.info("Successfully processed {} and verified checksum!", name);
         } else {
             Files.delete(file);

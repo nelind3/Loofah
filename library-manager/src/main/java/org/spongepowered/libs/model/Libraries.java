@@ -28,5 +28,5 @@ import java.util.List;
 import java.util.Map;
 
 public record Libraries(Map<String, List<Dependency>> dependencies) {
-    public record Dependency(String group, String module, String version, String md5) {}
+    public record Dependency(String group, String module, String version, String sha512) {}
 }

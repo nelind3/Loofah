@@ -29,5 +29,5 @@ import java.util.List;
 
 public record SonatypeResponse(List<Item> items, String continuationToken) {
     public record Item(URL downloadUrl, String path, String id, String repository, String format, Checksum checksum) {}
-    public record Checksum(String md5, String sha1, String sha256) {}
+    public record Checksum(String sha512) {}
 }
