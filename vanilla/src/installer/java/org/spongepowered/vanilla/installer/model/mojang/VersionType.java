@@ -24,24 +24,15 @@
  */
 package org.spongepowered.vanilla.installer.model.mojang;
 
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
+import com.google.gson.annotations.SerializedName;
 
-public record Version(AssetIndex assetIndex, String assets, Downloads downloads, String id,
-                      List<Library> libraries, String mainClass, VersionType type, String releaseTime, String time) {
-
-    public record AssetIndex(String id, String sha1, int size, int totalSize, URL url) {}
-
-    public record Downloads(Download client, Download client_mappings, Download server, Download server_mappings) {
-        public record Download(String sha1, int size, URL url) {
-        }
-    }
-
-    public record Library(Library.Downloads downloads, String name) {
-        public record Downloads(Artifact artifact, Map<String, Artifact> classifiers) {
-            public record Artifact(String path, String sha1, int size, URL url) {
-            }
-        }
-    }
+public enum VersionType {
+    @SerializedName("old_alpha")
+    OLD_ALPHA,
+    @SerializedName("old_beta")
+    OLD_BETA,
+    @SerializedName("release")
+    RELEASE,
+    @SerializedName("snapshot")
+    SNAPSHOT
 }

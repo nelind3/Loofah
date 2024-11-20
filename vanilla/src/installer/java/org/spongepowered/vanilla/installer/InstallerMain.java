@@ -245,18 +245,18 @@ public final class InstallerMain {
         }
     }
 
-    private Version downloadMinecraftManifest() throws IOException {
+    private Version downloadMinecraftManifest() throws Exception {
         Logger.info("Downloading the Minecraft versions manifest...");
 
         VersionManifest.Version foundVersionManifest = null;
 
         final Gson gson = new Gson();
-        final URLConnection conn = new URL(Constants.Libraries.MINECRAFT_MANIFEST_URL).openConnection();
+        final URLConnection conn = new URI(Constants.Libraries.MINECRAFT_MANIFEST_URL).toURL().openConnection();
         conn.setConnectTimeout(5 /* seconds */ * 1000);
         try (final JsonReader reader = new JsonReader(new InputStreamReader(conn.getInputStream()))) {
             final VersionManifest manifest = gson.fromJson(reader, VersionManifest.class);
-            for (final VersionManifest.Version version : manifest.versions) {
-                if (Constants.Libraries.MINECRAFT_VERSION_TARGET.equals(version.id)) {
+            for (final VersionManifest.Version version : manifest.versions()) {
+                if (Constants.Libraries.MINECRAFT_VERSION_TARGET.equals(version.id())) {
                     foundVersionManifest = version;
                     break;
                 }
@@ -268,14 +268,12 @@ public final class InstallerMain {
         }
 
         final Version version;
-
-        try (final JsonReader reader = new JsonReader(new InputStreamReader(foundVersionManifest.url.openStream()))) {
+        try (final JsonReader reader = new JsonReader(new InputStreamReader(foundVersionManifest.url().openStream()))) {
             version = gson.fromJson(reader, Version.class);
         }
 
         if (version == null) {
-            throw new IOException(String.format("Failed to download version information for '%s'!",
-                    Constants.Libraries.MINECRAFT_VERSION_TARGET));
+            throw new IOException(String.format("Failed to download version information for '%s'!", Constants.Libraries.MINECRAFT_VERSION_TARGET));
         }
 
         return version;
@@ -297,24 +295,25 @@ public final class InstallerMain {
 
     private CompletableFuture<Path> downloadMinecraft(final Version version, final Path librariesDirectory) {
         return LibraryUtils.asyncFailableFuture(() -> {
-            final Path downloadTarget = this.expectedBundleLocation(this.expectedMinecraftLocation(librariesDirectory, version.id));
+            final Path downloadTarget = this.expectedBundleLocation(this.expectedMinecraftLocation(librariesDirectory, version.id()));
+            final Version.Downloads.Download server = version.downloads().server();
 
             if (Files.notExists(downloadTarget)) {
                 if (!this.installer.getLauncherConfig().autoDownloadLibraries) {
                     throw new IOException(String.format("The Minecraft jar is not located at '%s' and downloading it has been turned off.", downloadTarget));
                 }
-                LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget, "SHA-1", version.downloads.server.sha1);
+                LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, server.url(), downloadTarget, "SHA-1", server.sha1());
             } else {
                 if (this.installer.getLauncherConfig().checkLibraryHashes) {
                     Logger.info("Detected existing Minecraft Server jar, verifying hashes...");
 
                     // Pipe the download stream into the file and compute the SHA-1
-                    if (LibraryUtils.validateDigest("SHA-1", version.downloads.server.sha1, downloadTarget)) {
+                    if (LibraryUtils.validateDigest("SHA-1", server.sha1(), downloadTarget)) {
                         Logger.info("Minecraft Server jar verified!");
                     } else {
-                        Logger.error("Checksum verification failed: Expected {}. Deleting cached Minecraft Server jar...", version.downloads.server.sha1);
+                        Logger.error("Checksum verification failed: Expected {}. Deleting cached Minecraft Server jar...", server.sha1());
                         Files.delete(downloadTarget);
-                        LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, version.downloads.server.url, downloadTarget, "SHA-1", version.downloads.server.sha1);
+                        LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, server.url(), downloadTarget, "SHA-1", server.sha1());
                     }
                 } else {
                     Logger.info("Detected existing Minecraft jar. Skipping hash check as that is turned off...");
@@ -388,7 +387,7 @@ public final class InstallerMain {
                     .resolve(Constants.Libraries.MINECRAFT_VERSION_TARGET)
                     .resolve(Constants.Libraries.MINECRAFT_MAPPINGS_NAME);
 
-            final Version.Downloads.Download mappings = version.downloads.server_mappings;
+            final Version.Downloads.Download mappings = version.downloads().server_mappings();
             if (mappings == null) {
                 throw new IOException(String.format("Mappings were not included in version manifest for %s", Constants.Libraries.MINECRAFT_VERSION_TARGET));
             }
@@ -397,12 +396,11 @@ public final class InstallerMain {
             if (Files.exists(downloadTarget)) {
                 if (checkHashes) {
                     Logger.info("Detected existing mappings, verifying hashes...");
-                    if (LibraryUtils.validateDigest("SHA-1", mappings.sha1, downloadTarget)) {
+                    if (LibraryUtils.validateDigest("SHA-1", mappings.sha1(), downloadTarget)) {
                         Logger.info("Mappings verified!");
                         return downloadTarget;
                     } else {
-                        Logger.error("Checksum verification failed: Expected {}. Deleting cached server mappings file...",
-                            version.downloads.server.sha1);
+                        Logger.error("Checksum verification failed: Expected {}. Deleting cached server mappings file...", mappings.sha1());
                         Files.delete(downloadTarget);
                     }
                 } else {
@@ -412,9 +410,9 @@ public final class InstallerMain {
 
             if (this.installer.getLauncherConfig().autoDownloadLibraries) {
                 if (checkHashes) {
-                    LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, mappings.url, downloadTarget, "SHA-1", mappings.sha1);
+                    LibraryUtils.downloadAndVerifyDigest(TinyLogger.INSTANCE, mappings.url(), downloadTarget, "SHA-1", mappings.sha1());
                 } else {
-                    LibraryUtils.download(TinyLogger.INSTANCE, mappings.url, downloadTarget, false);
+                    LibraryUtils.download(TinyLogger.INSTANCE, mappings.url(), downloadTarget, false);
                 }
             } else {
                 throw new IOException(String.format("Mappings were not located at '%s' and downloading them has been turned off.", downloadTarget));

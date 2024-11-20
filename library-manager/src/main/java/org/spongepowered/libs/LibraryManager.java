@@ -159,7 +159,7 @@ public final class LibraryManager {
                     Files.delete(depFile);
                 }
 
-                final URL requestUrl = URI.create(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
+                final URL requestUrl = new URI(String.format(LibraryManager.SPONGE_NEXUS_DOWNLOAD_URL,
                     dep.sha512(), dep.group(), dep.module(), dep.version())).toURL();
                 final SonatypeResponse response = this.getResponseFor(this.gson, requestUrl);
                 if (response.items().isEmpty()) {
