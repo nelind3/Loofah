@@ -29,10 +29,12 @@ import net.fabricmc.loader.impl.util.FileSystemUtil;
 import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
@@ -90,6 +92,19 @@ public class FabricPluginResource implements JVMPluginResource {
         }
 
         return manifest;
+    }
+
+    @Override
+    public Optional<URI> locateResource(String path) {
+        Optional<URI> resource = Optional.empty();
+        for (Path resourcePath : this.paths) {
+            final Path p = resourcePath.resolve(path);
+            if (Files.exists(p)) {
+                resource = Optional.of(p.toUri());
+                break;
+            }
+        }
+        return resource;
     }
 
     @Override
