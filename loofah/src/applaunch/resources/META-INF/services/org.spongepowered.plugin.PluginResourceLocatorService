@@ -1,3 +1,5 @@
 org.spongepowered.plugin.builtin.jvm.locator.ClasspathPluginResourceLocatorService
 org.spongepowered.plugin.builtin.jvm.locator.DirectoryPluginResourceLocatorService
 org.spongepowered.plugin.builtin.jvm.locator.EnvironmentPluginResourceLocatorService
+
+dk.nelind.loofah.applaunch.plugin.resource.FabricModPluginResourceLocatorService

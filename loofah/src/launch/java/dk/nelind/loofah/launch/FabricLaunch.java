@@ -33,7 +33,6 @@ import dk.nelind.loofah.applaunch.plugin.FabricPluginPlatform;
 import dk.nelind.loofah.launch.inject.FabricModule;
 import dk.nelind.loofah.launch.plugin.FabricDummyPluginContainer;
 import dk.nelind.loofah.launch.plugin.FabricPluginManager;
-import dk.nelind.loofah.launch.plugin.modbacked.FabricModBackedPluginContainer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
@@ -53,8 +52,6 @@ public class FabricLaunch extends Launch {
     private final FabricPluginManager pluginManager;
     public static final List<String> PLATFORM_PLUGINS = List.of(
         "minecraft",
-        "fabricloader",
-        "fabric-api",
         "spongeapi",
         "sponge",
         "loofah"
@@ -92,14 +89,6 @@ public class FabricLaunch extends Launch {
     }
 
     private void createPlatformPlugins() {
-        FabricLoader.getInstance().getAllMods().stream()
-            .filter(mod ->
-                PLATFORM_PLUGINS.contains(mod.getMetadata().getId()) ||
-                mod.getMetadata().getCustomValue("fabric-api:module-lifecycle") != null
-            )
-            .map(FabricModBackedPluginContainer::of)
-            .forEach(this.pluginManager()::addPlugin);
-
         this.pluginPlatform().getCandidates().values().stream().flatMap(Collection::stream)
             .filter(plugin -> PLATFORM_PLUGINS.contains(plugin.metadata().id()))
             .map(FabricDummyPluginContainer::of)

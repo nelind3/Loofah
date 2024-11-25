@@ -22,48 +22,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package dk.nelind.loofah.launch.plugin.modbacked;
+package dk.nelind.loofah.launch.plugin;
 
-import dk.nelind.loofah.applaunch.plugin.resource.FabricPluginResource;
-import net.fabricmc.loader.api.ModContainer;
-import org.spongepowered.plugin.builtin.jvm.JVMPluginResource;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.spongepowered.plugin.Environment;
+import org.spongepowered.plugin.PluginCandidate;
+import org.spongepowered.plugin.PluginLoader;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.jar.Manifest;
+public class FabricModPluginLoader implements PluginLoader<FabricJavaPluginContainer> {
+    private static final ArtifactVersion VERSION = new DefaultArtifactVersion("1.0");
 
-public class FabricModBackedPluginResource implements JVMPluginResource {
-    private final ModContainer mod;
-    private final Manifest manifest;
-
-    public FabricModBackedPluginResource(ModContainer mod) {
-        this.mod = mod;
-        try {
-            // TODO(loofah): idk this feels weird but i don't see an immediate need to pull this out into a
-            //  util class so in FabricPluginResource it shall stay
-            this.manifest = FabricPluginResource.getManifest(mod.getRootPaths());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public ArtifactVersion version() {
+        return FabricModPluginLoader.VERSION;
     }
 
     @Override
-    public Manifest manifest() {
-        return this.manifest;
-    }
-
-    @Override
-    public Path resourcesRoot() {
-        return this.mod.getRootPaths().getLast();
-    }
-
-    @Override
-    public String locator() {
-        return "fabric_loader";
-    }
-
-    @Override
-    public Path path() {
-        return this.mod.getOrigin().getPaths().getLast();
+    public FabricJavaPluginContainer loadPlugin(
+        Environment environment,
+        PluginCandidate candidate,
+        ClassLoader targetClassLoader
+    ) {
+        return new FabricJavaPluginContainer(candidate);
     }
 }

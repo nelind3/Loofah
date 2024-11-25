@@ -6,6 +6,21 @@
   "license": "MIT",
   "plugins": [
     {
+      "id": "minecraft",
+      "name": "Minecraft",
+      "version": "${minecraftVersion}",
+      "entrypoint": "net.fabricmc.loader.impl.launch.knot.Knot",
+      "links": {
+        "homepage": "https://www.minecraft.net"
+      },
+      "contributors": [
+        {
+          "name": "Mojang Studios",
+          "description": "Lead Developer"
+        }
+      ]
+    },
+    {
       "id": "sponge",
       "name": "Sponge",
       "version": "${minecraftVersion}-${apiVersion}",
