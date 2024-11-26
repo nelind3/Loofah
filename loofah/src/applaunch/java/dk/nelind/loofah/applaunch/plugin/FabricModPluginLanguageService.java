@@ -36,9 +36,14 @@ import org.spongepowered.plugin.PluginResource;
 import org.spongepowered.plugin.builtin.StandardPluginCandidate;
 import org.spongepowered.plugin.metadata.PluginMetadata;
 import org.spongepowered.plugin.metadata.builtin.StandardPluginMetadata;
+import org.spongepowered.plugin.metadata.builtin.model.StandardPluginContributor;
+import org.spongepowered.plugin.metadata.builtin.model.StandardPluginDependency;
+import org.spongepowered.plugin.metadata.builtin.model.StandardPluginLinks;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -89,6 +94,8 @@ public class FabricModPluginLanguageService implements PluginLanguageService {
     }
 
     private Set<PluginMetadata> parseFabricMetadata(JsonElement jsonRoot) {
+        // TODO(loofah): test if this is actually true after the class loading issues
+        //  (see dk.nelind.loofah.applaunch.plugin.resource.FabricModPluginResourceLocatorService) where fixed
         // We manually parse out only the parts of the fabric.mod.json we need since the loaders parser is inaccessible
         // to mods and the metadata available through the loader api doesn't give entrypoint information.
         // We also assume that the file is spec compliant and parsing thus won't error out since if we got this far
@@ -163,7 +170,119 @@ public class FabricModPluginLanguageService implements PluginLanguageService {
             builder.description(description.getAsString());
         }
 
+        JsonElement contact = rootObject.get("contact");
+        if (contact != null) {
+            builder.links(this.parseFabricModLinks(contact.getAsJsonObject()));
+        }
+
+        JsonElement authors = rootObject.get("authors");
+        if (authors != null)  {
+            for (JsonElement author : authors.getAsJsonArray()) {
+                if (author.isJsonPrimitive()) {
+                    builder.addContributor(this.parseFabricModPersonWithDescription(
+                        author.getAsString(), "Author"
+                    ));
+                } else {
+                    builder.addContributor(this.parseFabricModPersonWithDescription(
+                        author.getAsJsonObject(), "Author"
+                    ));
+                }
+            }
+        }
+
+        JsonElement contributors = rootObject.get("contributors");
+        if (contributors != null)  {
+            for (JsonElement contributor : contributors.getAsJsonArray()) {
+                if (contributor.isJsonPrimitive()) {
+                    builder.addContributor(this.parseFabricModPersonWithDescription(
+                        contributor.getAsString(), "Contributor"
+                    ));
+                } else {
+                    builder.addContributor(this.parseFabricModPersonWithDescription(
+                        contributor.getAsJsonObject(), "Contributor"
+                    ));
+                }
+            }
+        }
+
+        var dependencies = new HashSet<StandardPluginDependency>();
+
+        JsonElement depends = rootObject.get("depends");
+        if (depends != null) {
+            dependencies.addAll(this.parseFabricModDependency(depends.getAsJsonObject(), false));
+        }
+
+        JsonElement recommends = rootObject.get("recommends");
+        if (recommends != null) {
+            dependencies.addAll(this.parseFabricModDependency(recommends.getAsJsonObject(), true));
+        }
+
+        builder.dependencies(dependencies);
+
         return builder.build();
     }
 
+    private StandardPluginLinks parseFabricModLinks(JsonObject contactInfoObject) {
+        var builder = StandardPluginLinks.builder();
+
+        try {
+
+            JsonElement homepageLink = contactInfoObject.get("homepage");
+            if (homepageLink != null) {
+                builder.homepage(URI.create(homepageLink.getAsString()).toURL());
+            }
+
+            JsonElement issuesLink = contactInfoObject.get("issues");
+            if (issuesLink != null) {
+                builder.issues(URI.create(issuesLink.getAsString()).toURL());
+            }
+
+            JsonElement sourcesLink = contactInfoObject.get("sources");
+            if (sourcesLink != null) {
+                builder.source(URI.create(sourcesLink.getAsString()).toURL());
+            }
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Fabric mod had a malformed URL!", e);
+        }
+
+        return builder.build();
+    }
+
+    private StandardPluginContributor parseFabricModPersonWithDescription(String name, String description) {
+        var builder = StandardPluginContributor.builder();
+
+        builder.name(name);
+        builder.description(description);
+
+        return builder.build();
+    }
+
+    private StandardPluginContributor parseFabricModPersonWithDescription(JsonObject personObject, String description) {
+        var builder = StandardPluginContributor.builder();
+
+        builder.name(personObject.get("name").getAsString());
+        builder.description(description);
+
+        return builder.build();
+    }
+
+    private Set<StandardPluginDependency> parseFabricModDependency(JsonObject dependenciesObject, boolean optional) {
+        var dependencies = new HashSet<StandardPluginDependency>();
+
+        dependenciesObject.entrySet().forEach((entry) -> {
+            // Sponge has no concept of a java dependency
+            if (entry.getKey().equals("java")) return;
+            var builder = StandardPluginDependency.builder();
+
+            // Sponge does not support - in ids
+            builder.id(entry.getKey().replace("-", "_"));
+            builder.version(entry.getValue().getAsString());
+            builder.optional(optional);
+
+            dependencies.add(builder.build());
+        });
+
+        return dependencies;
+    }
 }

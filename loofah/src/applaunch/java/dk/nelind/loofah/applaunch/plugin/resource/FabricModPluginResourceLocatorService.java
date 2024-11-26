@@ -46,6 +46,8 @@ public class FabricModPluginResourceLocatorService implements JVMPluginResourceL
         environment.logger().info("Locating '{}' resources...", this.name());
         final Set<JVMPluginResource> resources = new HashSet<>();
 
+        // Consider handling the minecraft mod in a specific way since it doesn't have a fabric.mod.json and thus
+        // the minecraft plugin is currently loaded from a sponge plugin resource instead of the mod.
         final Collection<ModContainer> modContainers = FabricLoader.getInstance().getAllMods();
         for (ModContainer modContainer : modContainers) {
             final Path[] paths = modContainer.getRootPaths().toArray(new Path[0]);
