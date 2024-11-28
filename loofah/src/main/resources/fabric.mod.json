@@ -55,7 +55,8 @@
     "minecraft": "~${minecraftVersion}",
     "fabricloader": ">=${fabricLoaderVersion}",
     "fabric-lifecycle-events-v1": "*",
-    "fabric-networking-api-v1": "*"
+    "fabric-networking-api-v1": "*",
+    "fabric-registry-sync-v0": "*"
   },
   "suggests": {
     "another-mod": "*"

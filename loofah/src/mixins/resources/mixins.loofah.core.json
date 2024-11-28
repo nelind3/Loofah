@@ -13,6 +13,7 @@
     "brigdadier.exceptions.CommandSyntaxExceptionMixin_Fabric",
     "commands.CommandsMixin_Fabric",
     "fabricmc.fabric.impl.networking.server.ServerLoginNetworkAddonMixin",
+    "fabricmc.fabric.impl.registry.sync.RegistrySyncManagerMixin",
     "network.ConnectionMixin_Fabric",
     "network.protocol.common.ClientboundCustomPayloadPacketMixin_Fabric",
     "network.protocol.common.ServerboundCustomPayloadPacketMixin_Fabric",

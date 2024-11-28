@@ -187,6 +187,7 @@ dependencies {
     // Mod dependencies
     modImplementation(fabricApi.module("fabric-lifecycle-events-v1", fabricApiVersion))
     "modMixinsImplementation"(modImplementation(fabricApi.module("fabric-networking-api-v1", fabricApiVersion))!!)
+    "modMixinsImplementation"(modImplementation(fabricApi.module("fabric-registry-sync-v0", fabricApiVersion))!!)
 
     include(fabricLibrariesConfig(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:0.2.0")!!)!!)
 
