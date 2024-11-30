@@ -18,7 +18,6 @@ indraSpotlessLicenser {
     property("url", projectUrl)
 }
 
-
 dependencies {
     // AccessWidener transformer
     implementation(libs.accessWidener) {
@@ -47,4 +46,12 @@ dependencies {
 
     // And finally, compile only annotations
     compileOnly(apiLibs.checkerQual)
+}
+
+tasks {
+    jar {
+        manifest {
+            attributes("Automatic-Module-Name" to "sponge.modlauncher.transformers")
+        }
+    }
 }
