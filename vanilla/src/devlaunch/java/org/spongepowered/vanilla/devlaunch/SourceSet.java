@@ -42,6 +42,7 @@ public record SourceSet(String project, String name, String format) {
      * <p>Gradle:
      * <p>{@code {project}/build/classes/java/{name}/}
      * <p>{@code {project}/build/resources/{name}/}
+     * <p>{@code {project}/build/generated/{name}/}
      *
      * <p>IntelliJ:
      * <p>{@code {project}/out/{name}/classes/}
@@ -70,7 +71,7 @@ public record SourceSet(String project, String name, String format) {
             return new SourceSet(parts.get(3), name.equals("production") ? "main" : name, "IntelliJ");
         }
 
-        if (parts.size() >= 4 && parts.get(1).equals("resources")) {
+        if (parts.size() >= 4 && (parts.get(1).equals("resources") || parts.get(1).equals("generated"))) {
             return new SourceSet(parts.get(3), parts.get(0), "Gradle");
         }
 
