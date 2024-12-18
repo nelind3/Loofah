@@ -57,33 +57,33 @@ val mixinsConfig by configurations.register("mixins") {
 val main by sourceSets
 
 val applaunch by sourceSets.registering {
-    spongeImpl.applyNamedDependencyOnOutput(project, this, main, project, main.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(this, main)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(applaunchConfig)
     }
 }
 val launch by sourceSets.registering {
-    spongeImpl.applyNamedDependencyOnOutput(project, applaunch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, main, project, main.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(applaunch.get(), this)
+    spongeImpl.addDependencyToImplementation(this, main)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(launchConfig)
     }
 }
 val accessors by sourceSets.registering {
-    spongeImpl.applyNamedDependencyOnOutput(project, launch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, main, project, main.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(launch.get(), this)
+    spongeImpl.addDependencyToImplementation(this, main)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(accessorsConfig)
     }
 }
 val mixins by sourceSets.registering {
-    spongeImpl.applyNamedDependencyOnOutput(project, launch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, applaunch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, accessors.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, main, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(launch.get(), this)
+    spongeImpl.addDependencyToImplementation(applaunch.get(), this)
+    spongeImpl.addDependencyToImplementation(accessors.get(), this)
+    spongeImpl.addDependencyToImplementation(main, this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(mixinsConfig)

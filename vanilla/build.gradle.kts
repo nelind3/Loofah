@@ -71,8 +71,7 @@ val vanillaInstaller by sourceSets.register("installer") {
 
 // Boot layer
 val vanillaAppLaunch by sourceSets.register("applaunch") {
-    // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(applaunch.get(), this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(bootLayerConfig.get())
@@ -81,58 +80,55 @@ val vanillaAppLaunch by sourceSets.register("applaunch") {
 
 // Game layer
 val vanillaLaunch by sourceSets.register("launch") {
-    // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAppLaunch, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(applaunch.get(), this)
+    spongeImpl.addDependencyToImplementation(launch.get(), this)
+    spongeImpl.addDependencyToImplementation(main.get(), this)
+    spongeImpl.addDependencyToImplementation(vanillaAppLaunch, this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
     }
 }
 val vanillaAccessors by sourceSets.register("accessors") {
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(accessors.get(), this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
     }
 }
 val vanillaMixins by sourceSets.register("mixins") {
-    // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAppLaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaLaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAccessors, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(applaunch.get(), this)
+    spongeImpl.addDependencyToImplementation(launch.get(), this)
+    spongeImpl.addDependencyToImplementation(accessors.get(), this)
+    spongeImpl.addDependencyToImplementation(mixins.get(), this)
+    spongeImpl.addDependencyToImplementation(main.get(), this)
+    spongeImpl.addDependencyToImplementation(vanillaAppLaunch, this)
+    spongeImpl.addDependencyToImplementation(vanillaLaunch, this)
+    spongeImpl.addDependencyToImplementation(vanillaAccessors, this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
     }
 }
 val vanillaMain by sourceSets.named("main") {
-    // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAppLaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaLaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAccessors, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(applaunch.get(), this)
+    spongeImpl.addDependencyToImplementation(launch.get(), this)
+    spongeImpl.addDependencyToImplementation(accessors.get(), this)
+    spongeImpl.addDependencyToImplementation(main.get(), this)
+    spongeImpl.addDependencyToImplementation(vanillaAppLaunch, this)
+    spongeImpl.addDependencyToImplementation(vanillaLaunch, this)
+    spongeImpl.addDependencyToImplementation(vanillaAccessors, this)
 
-    spongeImpl.applyNamedDependencyOnOutput(project, this, vanillaMixins, project, vanillaMixins.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(this, vanillaMixins)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
     }
 
-    // runtime dependencies - the rest of the project because we want everything in the initial classpath
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins.get(), this, project, this.runtimeOnlyConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaDevLaunch, this, project, this.runtimeOnlyConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaMixins, this, project, this.runtimeOnlyConfigurationName)
+    // The rest of the project because we want everything in the initial classpath
+    spongeImpl.addDependencyToRuntimeOnly(mixins.get(), this)
+    spongeImpl.addDependencyToRuntimeOnly(vanillaDevLaunch, this)
+    spongeImpl.addDependencyToRuntimeOnly(vanillaMixins, this)
 
     configurations.named(runtimeOnlyConfigurationName) {
         extendsFrom(devlaunchLibrariesConfig.get())
