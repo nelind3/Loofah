@@ -115,9 +115,11 @@ val vanillaMixins by sourceSets.register("mixins") {
 }
 val vanillaMain by sourceSets.named("main") {
     // implementation (compile) dependencies
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAppLaunch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, vanillaLaunch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, vanillaAccessors, this, project, this.implementationConfigurationName)
 
@@ -128,10 +130,8 @@ val vanillaMain by sourceSets.named("main") {
     }
 
     // runtime dependencies - the rest of the project because we want everything in the initial classpath
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.runtimeOnlyConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins.get(), this, project, this.runtimeOnlyConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, vanillaDevLaunch, this, project, this.runtimeOnlyConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, vanillaAppLaunch, this, project, this.runtimeOnlyConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, vanillaMixins, this, project, this.runtimeOnlyConfigurationName)
 
     configurations.named(runtimeOnlyConfigurationName) {

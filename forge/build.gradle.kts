@@ -80,31 +80,37 @@ val mixins: NamedDomainObjectProvider<SourceSet> = commonProject.sourceSets.name
 val main: NamedDomainObjectProvider<SourceSet> = commonProject.sourceSets.named("main")
 
 // SpongeForge source sets
-val forgeMain by sourceSets.named("main") {
+// Service layer
+val forgeAppLaunch by sourceSets.register("applaunch") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
-        extendsFrom(gameLayerConfig.get())
+        extendsFrom(serviceLayerConfig.get())
     }
 }
+
+// Lang layer
+val forgeLang by sourceSets.register("lang") {
+    configurations.named(implementationConfigurationName) {
+        extendsFrom(langLayerConfig.get())
+    }
+}
+
+// Game layer
 val forgeLaunch by sourceSets.register("launch") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, forgeMain, project, forgeMain.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, forgeAppLaunch, this, project, this.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
     }
 }
 val forgeAccessors by sourceSets.register("accessors") {
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, forgeLaunch, project, forgeLaunch.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
@@ -112,31 +118,33 @@ val forgeAccessors by sourceSets.register("accessors") {
 }
 val forgeMixins by sourceSets.register("mixins") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins.get(), this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, forgeMain, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, forgeAccessors, this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, forgeAppLaunch, this, project, this.implementationConfigurationName)
     spongeImpl.applyNamedDependencyOnOutput(project, forgeLaunch, this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, forgeAccessors, this, project, this.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameLayerConfig.get())
     }
 }
-val forgeLang by sourceSets.register("lang") {
-    configurations.named(implementationConfigurationName) {
-        extendsFrom(langLayerConfig.get())
-    }
-}
-val forgeAppLaunch by sourceSets.register("applaunch") {
+val forgeMain by sourceSets.named("main") {
     // implementation (compile) dependencies
     spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch.get(), this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, forgeLaunch, project, forgeLaunch.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(commonProject, main.get(), this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, forgeAppLaunch, this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, forgeLaunch, this, project, this.implementationConfigurationName)
+    spongeImpl.applyNamedDependencyOnOutput(project, forgeAccessors, this, project, this.implementationConfigurationName)
+
+    spongeImpl.applyNamedDependencyOnOutput(project, this, forgeMixins, project, forgeMixins.implementationConfigurationName)
 
     configurations.named(implementationConfigurationName) {
-        extendsFrom(serviceLayerConfig.get())
+        extendsFrom(gameLayerConfig.get())
     }
 }
 
@@ -194,18 +202,6 @@ dependencies {
             nameSyntheticMembers = true
         }
     })
-
-    api(project(":", configuration = "launch")) {
-        exclude(group = "org.spongepowered", module = "mixin")
-    }
-    implementation(project(":", configuration = "accessors")) {
-        exclude(group = "org.spongepowered", module = "mixin")
-    }
-    implementation(project(commonProject.path)) {
-        exclude(group = "org.spongepowered", module = "mixin")
-    }
-
-    forgeMixins.implementationConfigurationName(project(commonProject.path))
 
     val service = serviceLibrariesConfig.name
     service(apiLibs.pluginSpi)
