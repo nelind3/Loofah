@@ -26,7 +26,6 @@ val apiVersion: String by project
 val minecraftVersion: String by project
 val neoForgeVersion: String by project
 val recommendedVersion: String by project
-val organization: String by project
 val projectUrl: String by project
 
 description = "The SpongeAPI implementation for NeoForge"
@@ -415,14 +414,6 @@ sourceSets {
             property("neoForgeVersion", neoForgeVersion)
         }
     }
-}
-
-indraSpotlessLicenser {
-    licenseHeaderFile(rootProject.file("HEADER.txt"))
-
-    property("name", "Sponge")
-    property("organization", organization)
-    property("url", projectUrl)
 }
 
 publishing {

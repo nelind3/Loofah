@@ -17,7 +17,6 @@ val apiVersion: String by project
 val apiJavaTarget: String by project
 val minecraftVersion: String by project
 val recommendedVersion: String by project
-val organization: String by project
 val projectUrl: String by project
 
 description = "The SpongeAPI implementation for Vanilla Minecraft"
@@ -516,14 +515,6 @@ tasks {
     assemble {
         dependsOn(universalJar)
     }
-}
-
-indraSpotlessLicenser {
-    licenseHeaderFile(rootProject.file("HEADER.txt"))
-
-    property("name", "Sponge")
-    property("organization", organization)
-    property("url", projectUrl)
 }
 
 val universalJar by tasks.existing

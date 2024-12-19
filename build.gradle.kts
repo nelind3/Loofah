@@ -176,14 +176,6 @@ dependencies {
     }
 }
 
-indraSpotlessLicenser {
-    licenseHeaderFile(rootProject.file("HEADER.txt"))
-
-    property("name", "Sponge")
-    property("organization", organization)
-    property("url", projectUrl)
-}
-
 allprojects {
     configurations.configureEach {
         resolutionStrategy.dependencySubstitution {
@@ -272,6 +264,14 @@ allprojects {
             indentWithSpaces(4)
             trimTrailingWhitespace()
         }
+    }
+
+    indraSpotlessLicenser {
+        licenseHeaderFile(rootProject.file("HEADER.txt"))
+
+        property("name", "Sponge")
+        property("organization", organization)
+        property("url", projectUrl)
     }
 
     val spongeSnapshotRepo: String? by project

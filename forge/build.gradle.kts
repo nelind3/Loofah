@@ -26,7 +26,6 @@ val apiVersion: String by project
 val minecraftVersion: String by project
 val forgeVersion: String by project
 val recommendedVersion: String by project
-val organization: String by project
 val projectUrl: String by project
 
 description = "The SpongeAPI implementation for MinecraftForge"
@@ -431,14 +430,6 @@ sourceSets {
             property("description", project.description.toString())
         }
     }
-}
-
-indraSpotlessLicenser {
-    licenseHeaderFile(rootProject.file("HEADER.txt"))
-
-    property("name", "Sponge")
-    property("organization", organization)
-    property("url", projectUrl)
 }
 
 publishing {
