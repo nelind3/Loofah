@@ -1,12 +1,3 @@
-plugins {
-    eclipse
-    idea
-}
-// Make sure jar is present for other projects
-eclipse {
-    synchronizationTasks(tasks.jar)
-}
-
 val organization: String by project
 val projectUrl: String by project
 
