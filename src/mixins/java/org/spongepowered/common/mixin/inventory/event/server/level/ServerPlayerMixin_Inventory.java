@@ -249,4 +249,15 @@ public abstract class ServerPlayerMixin_Inventory extends PlayerMixin_Inventory 
         }
         throw new IllegalStateException("Unknown Lens for Player Inventory: " + lens.getClass().getName());
     }
+
+    @Redirect(method = "doCloseContainer",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/world/inventory/AbstractContainerMenu;removed(Lnet/minecraft/world/entity/player/Player;)V"))
+    private void impl$onHandleContainerClose(final AbstractContainerMenu instance, final Player player) {
+        final PhaseContext<@NonNull ?> context = PhaseTracker.SERVER.getPhaseContext();
+        final TransactionalCaptureSupplier transactor = context.getTransactor();
+        try (final EffectTransactor ignored = transactor.logCloseInventory(player, true)) {
+            instance.removed(player);
+            instance.broadcastChanges();
+        }
+    }
 }
