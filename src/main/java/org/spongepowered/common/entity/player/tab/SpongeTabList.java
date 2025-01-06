@@ -243,7 +243,7 @@ public final class SpongeTabList implements TabList {
                     ((SpongeTabListEntry) entry).updateWithoutSend();
                     entry.setListed(update.listed());
                 }
-            } else {
+            } else if (filteredEntries == null) {
                 if (packet.entries().size() == 1) {
                     return null;
                 }
@@ -263,13 +263,15 @@ public final class SpongeTabList implements TabList {
         for (int i = 0; i < packet.profileIds().size(); i++) {
             final UUID uniqueId = packet.profileIds().get(i);
             final TabListEntry entry = this.entries.remove(uniqueId);
-            if (entry == null) {
+            if (entry != null) {
+                if (filteredProfileIds != null) {
+                    filteredProfileIds.add(uniqueId);
+                }
+            } else if (filteredProfileIds == null) {
                 if (packet.profileIds().size() == 1) {
                     return null;
                 }
                 filteredProfileIds = new ArrayList<>(packet.profileIds().subList(0, i));
-            } else if (filteredProfileIds != null) {
-                filteredProfileIds.add(uniqueId);
             }
         }
         if (filteredProfileIds == null) {
