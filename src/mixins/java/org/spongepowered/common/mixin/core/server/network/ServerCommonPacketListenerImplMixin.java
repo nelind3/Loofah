@@ -54,6 +54,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeCommon;
 import org.spongepowered.common.adventure.SpongeAdventure;
@@ -85,18 +86,28 @@ public abstract class ServerCommonPacketListenerImplMixin implements ServerCommo
     private Map<UUID, ResourcePackInfo> impl$resourcePackInfos = new ConcurrentHashMap<>();
     private Map<UUID, ResourcePackCallback> impl$resourcePackCallbacks = new ConcurrentHashMap<>();
 
-    @Inject(
+    @ModifyVariable(
             method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;)V",
-            at = @At("HEAD")
+            at = @At("HEAD"),
+            argsOnly = true
     )
-    private void impl$onClientboundPacketSend(final Packet<?> packet, final PacketSendListener listener, final CallbackInfo ci) {
-        this.impl$modifyClientBoundPacket(packet);
+    private @Nullable Packet<?> impl$onClientboundPacketSend(final Packet<?> packet) {
+        return this.impl$modifyClientBoundPacket(packet);
     }
 
-    public void impl$modifyClientBoundPacket(final Packet<?> packet) {
+    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;)V",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;isTerminal()Z"), cancellable = true)
+    private void impl$onClientboundPacketSendCancelled(final Packet<?> $$0, final PacketSendListener $$1, final CallbackInfo ci) {
+        if ($$0 == null) {
+            ci.cancel();
+        }
+    }
+
+    public @Nullable Packet<?> impl$modifyClientBoundPacket(final Packet<?> packet) {
         if (packet instanceof ClientboundResourcePackPushPacket packPacket) {
             this.impl$resourcePackInfos.put(packPacket.id(), ((ClientboundResourcePackPacketBridge) (Object) packPacket).bridge$getPackInfo());
         }
+        return packet;
     }
 
     @Inject(method = "handleResourcePackResponse", at = @At(
