@@ -227,7 +227,7 @@ dependencies {
     }
 
     boot(libs.mixin)
-    boot(libs.mixinextras)
+    boot(libs.mixinextras.common)
     boot(libs.asm.tree)
     boot(libs.guava) {
         exclude(group = "com.google.errorprone", module = "error_prone_annotations")
