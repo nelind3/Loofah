@@ -24,6 +24,7 @@
  */
 package org.spongepowered.common.mixin.core.server.network;
 
+import com.llamalad7.mixinextras.sugar.Cancellable;
 import com.mojang.authlib.GameProfile;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.resource.ResourcePackCallback;
@@ -31,7 +32,6 @@ import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import net.kyori.adventure.resource.ResourcePackStatus;
 import net.minecraft.network.Connection;
-import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundResourcePackPopPacket;
@@ -91,16 +91,12 @@ public abstract class ServerCommonPacketListenerImplMixin implements ServerCommo
             at = @At("HEAD"),
             argsOnly = true
     )
-    private @Nullable Packet<?> impl$onClientboundPacketSend(final Packet<?> packet) {
-        return this.impl$modifyClientBoundPacket(packet);
-    }
-
-    @Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;)V",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/Packet;isTerminal()Z"), cancellable = true)
-    private void impl$onClientboundPacketSendCancelled(final Packet<?> $$0, final PacketSendListener $$1, final CallbackInfo ci) {
-        if ($$0 == null) {
+    private @Nullable Packet<?> impl$onClientboundPacketSend(final Packet<?> packet, @Cancellable CallbackInfo ci) {
+        final @Nullable Packet<?> modifiedPacket = this.impl$modifyClientBoundPacket(packet);
+        if (modifiedPacket == null) {
             ci.cancel();
         }
+        return modifiedPacket;
     }
 
     public @Nullable Packet<?> impl$modifyClientBoundPacket(final Packet<?> packet) {

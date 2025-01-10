@@ -216,6 +216,7 @@ dependencies {
         exclude(group = "org.spongepowered", module = "configurate-core")
         exclude(group = "org.checkerframework", module = "checker-qual")
     }
+    service(libs.mixinextras)
 
     val game = gameLibrariesConfig.name
     game("org.spongepowered:spongeapi:$apiVersion")
