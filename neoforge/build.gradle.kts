@@ -328,7 +328,7 @@ tasks {
         this.dependencies("main", gameManagedLibrariesConfig)
         this.excludedDependencies(gameShadedLibrariesConfig)
 
-        outputFile.set(installerResources.map { it.file("org/spongepowered/neoforge/applaunch/loading/moddiscovery/libraries.json") })
+        outputFile.set(installerResources.map { it.file("sponge-libraries.json") })
     }
     named(forgeAppLaunch.processResourcesTaskName).configure {
         dependsOn(emitDependencies)

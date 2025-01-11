@@ -425,7 +425,7 @@ tasks {
         this.dependencies("main", gameManagedLibrariesConfig)
         this.excludedDependencies(downloadNotNeeded)
 
-        outputFile.set(installerResources.map { it.file("libraries.json") })
+        outputFile.set(installerResources.map { it.file("sponge-libraries.json") })
     }
     named(vanillaInstaller.processResourcesTaskName).configure {
         dependsOn(emitDependencies)
