@@ -46,6 +46,13 @@ val gameManagedLibrariesConfig: NamedDomainObjectProvider<Configuration> = confi
 val serviceShadedLibrariesConfig: NamedDomainObjectProvider<Configuration> = configurations.register("serviceShadedLibraries")
 val gameShadedLibrariesConfig: NamedDomainObjectProvider<Configuration> = configurations.register("gameShadedLibraries")
 
+val excludedLibrariesConfig: NamedDomainObjectProvider<Configuration> = configurations.register("excludedLibraries") {
+    extendsFrom(gameShadedLibrariesConfig.get())
+}
+val includedLibrariesConfig: NamedDomainObjectProvider<Configuration> = configurations.register("includedLibraries") {
+    extendsFrom(gameManagedLibrariesConfig.get())
+}
+
 val runTaskOnlyConfig: NamedDomainObjectProvider<Configuration> = configurations.register("runTaskOnly")
 
 configurations.named("forgeRuntimeLibrary") {
@@ -222,7 +229,7 @@ dependencies {
     game(libs.javaxInject)
     game(platform(apiLibs.adventure.bom))
     game(libs.adventure.serializerConfigurate4)
-    game(libs.mixinextras.forge)
+    game(libs.mixinextras.common)
 
     val serviceShadedLibraries = serviceShadedLibrariesConfig.name
     serviceShadedLibraries(project(transformersProject.path)) { isTransitive = false }
@@ -235,6 +242,12 @@ dependencies {
         spongeImpl.copyModulesExcludingProvided(serviceLibrariesConfig.get(), configurations.getByName("forgeDependencies"), serviceShadedLibrariesConfig.get())
         spongeImpl.copyModulesExcludingProvided(gameLibrariesConfig.get(), serviceLayerConfig.get(), gameManagedLibrariesConfig.get())
     }
+
+    val excluded = excludedLibrariesConfig.name
+    excluded(libs.mixinextras.common) // dev only
+
+    val included = includedLibrariesConfig.name
+    included(libs.mixinextras.forge) // prod only
 
     val runTaskOnly = runTaskOnlyConfig.name
     // Arch-loom bug, fix support of MOD_CLASSES
@@ -344,8 +357,8 @@ tasks {
 
     val emitDependencies by registering(org.spongepowered.gradle.impl.OutputDependenciesToJson::class) {
         group = "sponge"
-        this.dependencies("main", gameManagedLibrariesConfig)
-        this.excludedDependencies(gameShadedLibrariesConfig)
+        this.dependencies("main", includedLibrariesConfig)
+        this.excludeDependencies(excludedLibrariesConfig)
 
         outputFile.set(installerResources.map { it.file("sponge-libraries.json") })
     }

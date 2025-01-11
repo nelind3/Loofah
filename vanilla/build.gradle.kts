@@ -414,16 +414,12 @@ tasks {
     val installerResources = project.layout.buildDirectory.dir("generated/resources/installer")
     vanillaInstaller.resources.srcDir(installerResources)
 
-    val downloadNotNeeded = configurations.register("downloadNotNeeded") {
-        extendsFrom(configurations.minecraft.get())
-        extendsFrom(gameShadedLibrariesConfig.get())
-    }
-
     val emitDependencies by registering(org.spongepowered.gradle.impl.OutputDependenciesToJson::class) {
         group = "sponge"
         this.dependencies("bootstrap", bootLibrariesConfig)
         this.dependencies("main", gameManagedLibrariesConfig)
-        this.excludedDependencies(downloadNotNeeded)
+        this.excludeDependencies(configurations.minecraft)
+        this.excludeDependencies(gameShadedLibrariesConfig)
 
         outputFile.set(installerResources.map { it.file("sponge-libraries.json") })
     }
