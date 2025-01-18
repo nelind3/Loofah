@@ -202,9 +202,21 @@ public class FabricPluginPlatform implements PluginPlatform {
 
     public void createPluginCandidates() {
         for (final PluginLanguageService languageService : this.languageServices.values()) {
-            for (final Set<? extends PluginResource> resources : this.locatorResources.values()) {
-
-                for (final PluginResource pluginResource : resources) {
+            if (languageService.name().equals("fabric_mod")) {
+                for (final PluginResource pluginResource : this.locatorResources.values().stream().flatMap(Collection::stream).filter(pluginResource -> pluginResource.locator().equals("fabric_mods")).toList()) {
+                    try {
+                        final List<PluginCandidate> candidates = languageService.createPluginCandidates(this.standardEnvironment,
+                            pluginResource);
+                        if (candidates.isEmpty()) {
+                            continue;
+                        }
+                        this.pluginCandidates.computeIfAbsent(languageService, k -> new LinkedList<>()).addAll(candidates);
+                    } catch (final Exception ex) {
+                        this.standardEnvironment.logger().error("Failed to create plugin candidates", ex);
+                    }
+                }
+            } else {
+                for (final PluginResource pluginResource : this.locatorResources.values().stream().flatMap(Collection::stream).filter(pluginResource -> !pluginResource.locator().equals("fabric_mods")).toList()) {
                     try {
                         final List<PluginCandidate> candidates = languageService.createPluginCandidates(this.standardEnvironment,
                             pluginResource);
