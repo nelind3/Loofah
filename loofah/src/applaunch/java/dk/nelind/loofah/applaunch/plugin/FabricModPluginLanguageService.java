@@ -207,6 +207,7 @@ public class FabricModPluginLanguageService implements PluginLanguageService {
 
         var dependencies = new HashSet<StandardPluginDependency>();
 
+        // sd
         JsonElement depends = rootObject.get("depends");
         if (depends != null) {
             dependencies.addAll(this.parseFabricModDependency(depends.getAsJsonObject(), false));
@@ -277,7 +278,15 @@ public class FabricModPluginLanguageService implements PluginLanguageService {
 
             // Sponge does not support - in ids
             builder.id(entry.getKey().replace("-", "_"));
-            builder.version(entry.getValue().getAsString());
+            if (entry.getValue().isJsonArray()) {
+                var versionStringBldr = new StringBuilder();
+                entry.getValue().getAsJsonArray().forEach(elm -> {
+                    versionStringBldr.append(elm.getAsString()).append(",");
+                });
+                builder.version(versionStringBldr.toString());
+            } else {
+                builder.version(entry.getValue().getAsString());
+            }
             builder.optional(optional);
 
             dependencies.add(builder.build());
