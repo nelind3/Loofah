@@ -103,10 +103,26 @@ public final class Constants {
     public static final String UUID_LEAST = "UUIDLeast";
     public static final DataQuery UUID_LEAST_QUERY = DataQuery.of(Constants.UUID_LEAST);
     public static final String MINECRAFT = "minecraft";
-    public static final String MINECRAFT_CLIENT = "net.minecraft.client.Minecraft";
-    public static final String DEDICATED_SERVER = "net.minecraft.server.dedicated.DedicatedServer";
-    public static final String MINECRAFT_SERVER = "net.minecraft.server.MinecraftServer";
-    public static final String INTEGRATED_SERVER = "net.minecraft.client.server.IntegratedServer";
+    // TODO(loofah): find a better way to handle mappings at runtime
+    // Loofah : Let loofah change the class names with a mixin
+    public static final String MINECRAFT_CLIENT = Constants.getClientClassName();
+    public static final String DEDICATED_SERVER = Constants.getDedicatedServerClassName();
+    public static final String MINECRAFT_SERVER = Constants.getServerClassName();
+    public static final String INTEGRATED_SERVER = Constants.getIntegratedServerClassName();
+
+    private static String getClientClassName() {
+        return "net.minecraft.client.Minecraft";
+    }
+    private static String getDedicatedServerClassName() {
+        return "net.minecraft.server.dedicated.DedicatedServer";
+    }
+    private static String getServerClassName() {
+        return "net.minecraft.server.MinecraftServer";
+    }
+    private static String getIntegratedServerClassName() {
+        return "net.minecraft.client.server.IntegratedServer";
+    }
+    // Loofah end
 
     private Constants() {
     }
@@ -171,9 +187,9 @@ public final class Constants {
         /**
          * Modifies bits in an integer.
          *
-         * @param num Integer to modify
-         * @param data Bits of data to add
-         * @param which Index of nibble to start at
+         * @param num           Integer to modify
+         * @param data          Bits of data to add
+         * @param which         Index of nibble to start at
          * @param bitsToReplace The number of bits to replace starting from nibble index
          * @return The modified integer
          */
