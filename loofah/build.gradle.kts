@@ -19,9 +19,9 @@ repositories {
 }
 
 plugins {
-    id("fabric-loom") version "1.6.3"
-    id("com.github.johnrengelman.shadow")
+    alias(libs.plugins.shadow)
     id("implementation-structure")
+    id("dev.architectury.loom") version "1.6.411"
     id("maven-publish")
 }
 
@@ -50,14 +50,19 @@ val accessors: SourceSet = commonProject.sourceSets.named("accessors").get()
 
 
 //Fabric source sets and configurations
-val gameManagedLibraries = configurations.register("gameManagedLibraries").get()
-// Kinda hackish but makes the game itself dependable.
-afterEvaluate {
-    gameManagedLibraries.extendsFrom(configurations.named("minecraftNamedCompile").get())
-}
+val gameManagedLibraries = configurations.register("gameManagedLibraries") {
+    // Kinda hackish but makes the game itself dependable.
+    afterEvaluate {
+        extendsFrom(configurations.named("minecraftNamedCompile").get())
+    }
+}.get()
+
 val fabricBootstrapLibrariesConfig = configurations.register("bootstrapLibraries").get()
 val fabricLibrariesConfig = configurations.register("libraries") {
     extendsFrom(fabricBootstrapLibrariesConfig)
+}.get()
+val transitiveInclude = configurations.register("transitiveInclude") {
+    extendsFrom(fabricLibrariesConfig)
 }.get()
 
 val fabricMain by sourceSets.named("main") {
@@ -219,6 +224,11 @@ dependencies {
     fabricLibrariesConfig(apiLibs.adventure.textSerializer.legacy)
     fabricLibrariesConfig(libs.adventure.serializerConfigurate4)
     fabricLibrariesConfig(apiLibs.math)
+
+    // TODO(loofah): find a better way to handle libraries
+    transitiveInclude.resolvedConfiguration.resolvedArtifacts.forEach {
+        include(it.moduleVersion.id.toString().lowercase())
+    }
 }
 
 tasks {
@@ -273,7 +283,8 @@ tasks {
     }
 
     shadowJar {
-        configurations = listOf(fabricLibrariesConfig)
+        mergeServiceFiles()
+        configurations = listOf()
 
         from(commonProject.sourceSets.main.map { it.output })
         from(commonProject.sourceSets.named("accessors").map {it.output })
@@ -286,6 +297,9 @@ tasks {
         from(fabricAppLaunch.output)
         from(fabricLaunch.output)
         from(fabricMain.output)
+
+        isEnableRelocation = true
+        relocationPrefix = "dk.nelind.loofah.shadowed"
     }
 
     remapJar.get().enabled = false
