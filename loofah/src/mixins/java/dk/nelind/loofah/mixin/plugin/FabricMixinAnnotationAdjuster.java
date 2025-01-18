@@ -25,9 +25,12 @@
 package dk.nelind.loofah.mixin.plugin;
 
 import com.bawnorton.mixinsquared.adjuster.tools.AdjustableAnnotationNode;
+import com.bawnorton.mixinsquared.adjuster.tools.AdjustableRedirectNode;
 import com.bawnorton.mixinsquared.api.MixinAnnotationAdjuster;
+import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.List;
 
@@ -43,6 +46,21 @@ public class FabricMixinAnnotationAdjuster implements MixinAnnotationAdjuster {
         // See also dk.nelind.loofah.mixin.compat.world.level.ExplosionMixin
         if (mixinClassName.equals("dev.architectury.mixin.fabric.MixinExplosion") && annotationNode.is(Inject.class)) {
             return null;
+        }
+
+        // TODO(loofah): revert once bug is fixed upstream
+        // Manually remap target string for production. See https://github.com/FabricMC/tiny-remapper/issues/126
+        if (
+            !FabricLoader.getInstance().isDevelopmentEnvironment() &&
+            mixinClassName.equals("org.spongepowered.common.mixin.core.world.ticks.LevelChunkTicksMixin") &&
+            handlerNode.name.equals("impl$onSaveSkipCancelled2") &&
+            annotationNode.is(Redirect.class)
+        ) {
+            return annotationNode.as(AdjustableRedirectNode.class)
+                .withAt(at -> {
+                    at.setTarget("Lnet/minecraft/class_2499;add(Ljava/lang/Object;)Z");
+                    return at;
+                });
         }
 
         return annotationNode;
