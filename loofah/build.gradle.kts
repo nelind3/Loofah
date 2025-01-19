@@ -20,7 +20,7 @@ repositories {
 plugins {
     alias(libs.plugins.shadow)
     id("implementation-structure")
-    id("dev.architectury.loom") version "1.6.411"
+    id("fabric-loom") version "1.9.2"
     id("maven-publish")
 }
 
