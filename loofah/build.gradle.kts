@@ -1,5 +1,4 @@
 import net.fabricmc.loom.task.AbstractRunTask
-import net.fabricmc.loom.task.RemapJarTask
 import net.fabricmc.loom.task.RunGameTask
 
 repositories {
@@ -295,18 +294,9 @@ tasks {
         from(fabricAppLaunch.output)
         from(fabricLaunch.output)
         from(fabricMain.output)
-
-        isEnableRelocation = true
-        relocationPrefix = "dk.nelind.loofah.shadowed"
     }
 
-    remapJar.get().enabled = false
-    register("remapShadowJar", RemapJarTask::class) {
-        build.get().finalizedBy(this)
-
-        group = "shadow"
-        archiveClassifier = "mod"
-
+    remapJar {
         inputFile.set(shadowJar.flatMap { it.archiveFile })
     }
 }
