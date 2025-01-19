@@ -67,11 +67,11 @@ val transitiveInclude = configurations.register("transitiveInclude") {
 
 val fabricMain by sourceSets.named("main") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, main, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(mixins, this)
+    spongeImpl.addDependencyToImplementation(accessors, this)
+    spongeImpl.addDependencyToImplementation(applaunch, this)
+    spongeImpl.addDependencyToImplementation(launch, this)
+    spongeImpl.addDependencyToImplementation(main, this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
@@ -80,11 +80,11 @@ val fabricMain by sourceSets.named("main") {
 }
 val fabricLaunch by sourceSets.register("launch") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, main, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(launch, this)
+    spongeImpl.addDependencyToImplementation(applaunch, this)
+    spongeImpl.addDependencyToImplementation(main, this)
 
-    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(this, fabricMain)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
@@ -94,11 +94,11 @@ val fabricLaunch by sourceSets.register("launch") {
 
 val fabricAppLaunch by sourceSets.register("applaunch") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, launch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(launch, this)
+    spongeImpl.addDependencyToImplementation(applaunch, this)
 
-    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricMain, project, fabricMain.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, this, fabricLaunch, project, fabricLaunch.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(this, fabricMain)
+    spongeImpl.addDependencyToImplementation(this, fabricLaunch)
 
 
     configurations.named(implementationConfigurationName) {
@@ -109,12 +109,12 @@ val fabricAppLaunch by sourceSets.register("applaunch") {
 
 val fabricMixins by sourceSets.register("mixins") {
     // implementation (compile) dependencies
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, main, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, mixins, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, accessors, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(commonProject, applaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, fabricAppLaunch, this, project, this.implementationConfigurationName)
-    spongeImpl.applyNamedDependencyOnOutput(project, fabricMain, this, project, this.implementationConfigurationName)
+    spongeImpl.addDependencyToImplementation(main, this)
+    spongeImpl.addDependencyToImplementation(mixins, this)
+    spongeImpl.addDependencyToImplementation(accessors, this)
+    spongeImpl.addDependencyToImplementation(applaunch, this)
+    spongeImpl.addDependencyToImplementation(fabricAppLaunch, this)
+    spongeImpl.addDependencyToImplementation(fabricMain, this)
 
     configurations.named(implementationConfigurationName) {
         extendsFrom(gameManagedLibraries)
