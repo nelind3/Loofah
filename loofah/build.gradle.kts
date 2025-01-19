@@ -184,8 +184,7 @@ dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings(loom.layered() {
         officialMojangMappings { nameSyntheticMembers = true }
-        // Temporarily disabled since parchment doesn't have 1.21.1 versions yet
-        //parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentBuild")
+        parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentBuild")
     })
     gameManagedLibraries(modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")!!)
 
