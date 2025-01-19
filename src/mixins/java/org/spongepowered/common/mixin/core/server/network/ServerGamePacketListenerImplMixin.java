@@ -40,6 +40,7 @@ import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
 import net.minecraft.network.protocol.game.ClientboundMoveVehiclePacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundChatCommandSignedPacket;
 import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
@@ -88,8 +89,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.SpongeCommon;
+import org.spongepowered.common.accessor.network.protocol.game.ServerboundMovePlayerPacketAccessor;
 import org.spongepowered.common.accessor.network.protocol.game.ServerboundMoveVehiclePacketAccessor;
 import org.spongepowered.common.accessor.server.level.ServerPlayerGameModeAccessor;
 import org.spongepowered.common.adventure.SpongeAdventure;
@@ -139,11 +142,13 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
     private int impl$ignorePackets;
 
     @Override
-    public void impl$modifyClientBoundPacket(final Packet<?> packet) {
-        super.impl$modifyClientBoundPacket(packet);
-        if (packet instanceof ClientboundPlayerInfoUpdatePacket infoPacket) {
-            ((SpongeTabList) ((ServerPlayer) this.player).tabList()).updateEntriesOnSend(infoPacket);
+    public @Nullable Packet<?> impl$modifyClientBoundPacket(final Packet<?> packet) {
+        if (packet instanceof final ClientboundPlayerInfoUpdatePacket infoPacket) {
+            return ((SpongeTabList) ((ServerPlayer) this.player).tabList()).updateEntriesOnSend(infoPacket);
+        } else if (packet instanceof final ClientboundPlayerInfoRemovePacket removePacket) {
+            return ((SpongeTabList) ((ServerPlayer) this.player).tabList()).updateEntriesOnSend(removePacket);
         }
+        return super.impl$modifyClientBoundPacket(packet);
     }
 
     @Override
@@ -197,9 +202,11 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
     }
 
     @Inject(method = "handleMovePlayer",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isPassenger()Z"),
-            cancellable = true
-    )
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;getYRot(F)F"),
+        cancellable = true,
+        slice = @Slice(
+            from = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;updateAwaitingTeleport()Z"),
+            to = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isPassenger()Z")))
     private void impl$callMoveEntityEvent(final ServerboundMovePlayerPacket packetIn, final CallbackInfo ci) {
         final boolean fireMoveEvent = packetIn.hasPosition();
         final boolean fireRotationEvent = packetIn.hasRotation();
@@ -266,7 +273,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
         }
 
         // Handle event results
-        if (!toPosition.equals(originalToPosition) || !toRotation.equals(originalToRotation)) {
+        if (!toPosition.equals(originalToPosition)) {
             // Notify the client about the new position and new rotation.
             // Both are relatives so the client will keep its momentum.
             // The client thinks its current position is originalToPosition so the new position is relative to that.
@@ -278,6 +285,20 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                     (float) toRotation.y(), (float) toRotation.x(),
                     EnumSet.allOf(RelativeMovement.class));
             ci.cancel();
+        } else if (!toRotation.equals(originalToRotation)) {
+            // Notify the client about the new rotation.
+            // Both are relatives so the client will keep its momentum.
+            // The rotation values can be out of "valid" range so set them directly to the same value the client has.
+            this.player.setXRot((float) originalToRotation.x());
+            this.player.setYRot((float) originalToRotation.y());
+            this.shadow$teleport(fromPosition.x(), fromPosition.y(), fromPosition.z(),
+                (float) toRotation.y(), (float) toRotation.x(),
+                EnumSet.allOf(RelativeMovement.class));
+
+            // Let MC handle the movement but override the rotation.
+            ((ServerboundMovePlayerPacketAccessor) packetIn).accessor$yRot((float) toRotation.y());
+            ((ServerboundMovePlayerPacketAccessor) packetIn).accessor$xRot((float) toRotation.x());
+            ((ServerboundMovePlayerPacketAccessor) packetIn).accessor$hasRot(true);
         }
     }
 

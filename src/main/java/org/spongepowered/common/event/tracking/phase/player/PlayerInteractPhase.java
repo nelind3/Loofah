@@ -22,36 +22,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.neoforge.applaunch.loading.moddiscovery.library.model.sponge;
+package org.spongepowered.common.event.tracking.phase.player;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import org.spongepowered.common.event.tracking.PhaseTracker;
+import org.spongepowered.common.event.tracking.PooledPhaseState;
+import org.spongepowered.common.event.tracking.TrackingUtil;
 
-public final class Libraries {
+public final class PlayerInteractPhase extends PooledPhaseState<PlayerInteractContext> {
 
-    public Map<String, List<Dependency>> dependencies;
+    @Override
+    protected PlayerInteractContext createNewContext(final PhaseTracker tracker) {
+        return new PlayerInteractContext(this, tracker);
+    }
 
-    public static final class Dependency {
-
-        public String group, module, version, md5;
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.group, this.module);
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || this.getClass() != o.getClass()) {
-                return false;
-            }
-            final Dependency that = (Dependency) o;
-            return this.group.equals(that.group) &&
-                this.module.equals(that.module);
-        }
+    @Override
+    public void unwind(final PlayerInteractContext context) {
+        TrackingUtil.processBlockCaptures(context);
     }
 }

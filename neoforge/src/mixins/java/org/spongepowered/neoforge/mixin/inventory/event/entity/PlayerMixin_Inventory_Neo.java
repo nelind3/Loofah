@@ -22,31 +22,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.forge.applaunch.loading.moddiscovery.library;
+package org.spongepowered.neoforge.mixin.inventory.event.entity;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 
-final class AsyncUtils {
+@Mixin(Player.class)
+public abstract class PlayerMixin_Inventory_Neo {
 
-    private AsyncUtils() {
-    }
-
-    static <T> CompletableFuture<T> asyncFailableFuture(final Callable<T> action, final Executor executor) {
-        final CompletableFuture<T> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                future.complete(action.call());
-            } catch (final Exception ex) {
-                future.completeExceptionally(ex);
-            }
-        });
-        return future;
-    }
-
-    @SuppressWarnings("unchecked")
-    static <T extends Throwable, R> R sneakyThrow(final Throwable original) throws T {
-        throw (T) original;
-    }
+    // @formatter:off
+    @Shadow public AbstractContainerMenu containerMenu;
+    @Shadow @Final public InventoryMenu inventoryMenu;
+    // @formatter:on
 }

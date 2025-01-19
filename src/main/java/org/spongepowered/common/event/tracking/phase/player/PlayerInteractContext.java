@@ -22,25 +22,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.vanilla.installer.model.sponge;
+package org.spongepowered.common.event.tracking.phase.player;
 
-import java.net.URL;
-import java.util.List;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.api.world.server.ServerLocation;
+import org.spongepowered.common.event.tracking.IPhaseState;
+import org.spongepowered.common.event.tracking.PhaseContext;
+import org.spongepowered.common.event.tracking.PhaseTracker;
 
-public final class SonatypeResponse {
+import java.util.Optional;
 
-    public List<Item> items;
-    public String continuationToken;
+public final class PlayerInteractContext extends PhaseContext<PlayerInteractContext> {
 
-    public static final class Item {
+    private @Nullable ServerLocation containerLocation;
 
-        public URL downloadUrl;
-        public String path, id, repository, format;
-        public Checksum checksum;
+    PlayerInteractContext(final IPhaseState<PlayerInteractContext> state, final PhaseTracker tracker) {
+        super(state, tracker);
     }
 
-    public static final class Checksum {
+    public PlayerInteractContext containerLocation(final ServerLocation location) {
+        this.containerLocation = location;
+        return this;
+    }
 
-        public String sha1, md5;
+    @Override
+    public Optional<ServerLocation> containerLocation() {
+        return Optional.ofNullable(this.containerLocation);
+    }
+
+    @Override
+    protected void reset() {
+        super.reset();
+        this.containerLocation = null;
     }
 }

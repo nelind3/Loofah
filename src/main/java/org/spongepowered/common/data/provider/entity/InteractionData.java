@@ -22,35 +22,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.common.user;
+package org.spongepowered.common.data.provider.entity;
 
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
+import org.spongepowered.api.data.Keys;
+import org.spongepowered.common.accessor.world.entity.InteractionAccessor;
+import org.spongepowered.common.data.provider.DataProviderRegistrator;
 
-// Used to reduce the number of calls to maps.
-final class SpongeUserMutableWatchEvent {
+public final class InteractionData {
 
-    private WatchEvent.Kind<?> kind = null;
-
-    public WatchEvent.Kind<?> get() {
-        return this.kind;
+    private InteractionData() {
     }
 
-    public void set(WatchEvent.Kind<?> kind) {
-        if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-            // This should never happen, we don't listen to this.
-            // However, if it does, treat it as a create, because it
-            // infers the existence of the file.
-            kind = StandardWatchEventKinds.ENTRY_CREATE;
-        }
-
-        if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_DELETE) {
-            if (this.kind != null && this.kind != kind) {
-                this.kind = null;
-            } else {
-                this.kind = kind;
-            }
-        }
+    // @formatter:off
+    public static void register(final DataProviderRegistrator registrator) {
+        registrator
+                .asMutable(InteractionAccessor.class)
+                    .create(Keys.BOUNDING_BOX_BASE_SIZE)
+                        .get(h -> (double) h.invoker$getWidth())
+                        .set((h, v) -> h.invoker$setWidth(v.floatValue()))
+                    .create(Keys.BOUNDING_BOX_HEIGHT)
+                        .get(h -> (double) h.invoker$getHeight())
+                        .set((h, v) -> h.invoker$setHeight(v.floatValue()))
+            ;
     }
-
+    // @formatter:on
 }

@@ -123,6 +123,7 @@ import org.spongepowered.common.accessor.server.network.ServerCommonPacketListen
 import org.spongepowered.common.accessor.world.level.portal.DimensionTransitionAccessor;
 import org.spongepowered.common.adventure.SpongeAdventure;
 import org.spongepowered.common.bridge.data.DataCompoundHolder;
+import org.spongepowered.common.bridge.data.TransientBridge;
 import org.spongepowered.common.bridge.permissions.SubjectBridge;
 import org.spongepowered.common.bridge.server.ServerScoreboardBridge;
 import org.spongepowered.common.bridge.server.level.ServerPlayerBridge;
@@ -614,6 +615,9 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
     /*@Overwrite
     public void die(final DamageSource cause) {
         // Sponge start - Call Destruct Death Event
+        if (PlatformHooks.INSTANCE.getEventHooks().callPlayerDestruction((net.minecraft.server.level.ServerPlayer) (Object) this, cause)) {
+            return;
+        }
         final DestructEntityEvent.Death event = SpongeCommonEventFactory.callDestructEntityEventDeath((net.minecraft.server.level.ServerPlayer) (Object) this, cause,
                 Audiences.server());
         if (event.isCancelled()) {
@@ -985,5 +989,10 @@ public abstract class ServerPlayerMixin extends PlayerMixin implements SubjectBr
     private void impl$onFindRespawnPositionAndUseSpawnBlock(final CallbackInfoReturnable<DimensionTransition> cir) {
         ((DimensionTransitionAccessor) (Object) cir.getReturnValue()).accessor$newLevel(this.impl$respawnLevel);
         this.impl$respawnLevel = null;
+    }
+
+    @Redirect(method = "addAdditionalSaveData", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hasExactlyOnePlayerPassenger()Z"))
+    private boolean impl$skipUnserializableRootVehicle(final Entity instance) {
+        return instance.hasExactlyOnePlayerPassenger() && !((TransientBridge) instance).bridge$isTransient();
     }
 }

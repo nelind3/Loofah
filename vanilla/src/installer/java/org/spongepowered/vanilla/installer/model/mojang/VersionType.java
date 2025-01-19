@@ -22,36 +22,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.vanilla.installer.model.sponge;
+package org.spongepowered.vanilla.installer.model.mojang;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import com.google.gson.annotations.SerializedName;
 
-public final class Libraries {
-
-    public Map<String, List<Dependency>> dependencies;
-
-    public static final class Dependency {
-
-        public String group, module, version, md5;
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.group, this.module);
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || this.getClass() != o.getClass()) {
-                return false;
-            }
-            final Dependency that = (Dependency) o;
-            return this.group.equals(that.group) &&
-                this.module.equals(that.module);
-        }
-    }
+public enum VersionType {
+    @SerializedName("old_alpha")
+    OLD_ALPHA,
+    @SerializedName("old_beta")
+    OLD_BETA,
+    @SerializedName("release")
+    RELEASE,
+    @SerializedName("snapshot")
+    SNAPSHOT
 }

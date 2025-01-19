@@ -22,25 +22,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.neoforge.applaunch.loading.moddiscovery.library.model.sponge;
+package org.spongepowered.forge.applaunch.loading.moddiscovery.library;
 
-import java.net.URL;
-import java.util.List;
+import org.spongepowered.libs.Logger;
 
-public final class SonatypeResponse {
+public final class Log4JLogger implements Logger {
+    private final org.apache.logging.log4j.Logger delegate;
 
-    public List<Item> items;
-    public String continuationToken;
-
-    public static final class Item {
-
-        public URL downloadUrl;
-        public String path, id, repository, format;
-        public Checksum checksum;
+    public Log4JLogger(final org.apache.logging.log4j.Logger delegate) {
+        this.delegate = delegate;
     }
 
-    public static final class Checksum {
+    @Override
+    public void log(final Level level, final String message, final Object... args) {
+        this.delegate.log(this.convertLevel(level), message, args);
+    }
 
-        public String sha1, md5;
+    @Override
+    public void log(final Level level, final String message, final Throwable throwable) {
+        this.delegate.log(this.convertLevel(level), message, throwable);
+    }
+
+    private org.apache.logging.log4j.Level convertLevel(final Level level) {
+        return switch (level) {
+            case DEBUG -> org.apache.logging.log4j.Level.DEBUG;
+            case INFO -> org.apache.logging.log4j.Level.INFO;
+            case WARN -> org.apache.logging.log4j.Level.WARN;
+            case ERROR -> org.apache.logging.log4j.Level.ERROR;
+        };
     }
 }

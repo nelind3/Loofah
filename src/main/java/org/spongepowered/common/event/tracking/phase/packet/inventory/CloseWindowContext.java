@@ -22,25 +22,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.forge.applaunch.loading.moddiscovery.library.model.sponge;
+package org.spongepowered.common.event.tracking.phase.packet.inventory;
 
-import java.net.URL;
-import java.util.List;
+import org.spongepowered.common.event.tracking.PhaseTracker;
+import org.spongepowered.common.event.tracking.phase.packet.PacketContext;
+import org.spongepowered.common.event.tracking.phase.packet.PacketState;
 
-public final class SonatypeResponse {
+public final class CloseWindowContext extends PacketContext<CloseWindowContext> {
 
-    public List<Item> items;
-    public String continuationToken;
+    private boolean clientSide = true;
 
-    public static final class Item {
-
-        public URL downloadUrl;
-        public String path, id, repository, format;
-        public Checksum checksum;
+    public CloseWindowContext(final PacketState<CloseWindowContext> state, final PhaseTracker tracker) {
+        super(state, tracker);
     }
 
-    public static final class Checksum {
+    public CloseWindowContext isClientSide(final boolean clientSide) {
+        this.clientSide = clientSide;
+        return this;
+    }
 
-        public String sha1, md5;
+    @Override
+    public boolean hasCaptures() {
+        return true;
+    }
+
+    @Override
+    public boolean isClientSide() {
+        return this.clientSide;
+    }
+
+    @Override
+    protected void reset() {
+        super.reset();
+        this.clientSide = true;
     }
 }
